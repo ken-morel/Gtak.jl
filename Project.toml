@@ -1,0 +1,7 @@
+name = "Gtak"
+uuid = "a3bce912-7891-4ecb-9303-45bc44922d80"
+authors = ["Engon Ken Morel <engonken8@gmail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1.11"
