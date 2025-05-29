@@ -2,12 +2,12 @@ module Gtak
 
 
 using ..Efus
-using ..Efus: evaluateargs!, master, update!
+using ..Efus: evaluateargs!, master, update!, @efuseval_str, mount!, iserror, queryone, remount!, rerender!
 using Gtk
 using Gtk: GtkWidget
 
 
-export mainloop
+export mainloop, @efuseval_str, mount!, iserror, queryone, remount!, rerender!
 
 
 
