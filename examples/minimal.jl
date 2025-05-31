@@ -10,7 +10,7 @@ end
 page = efuseval"""
 using Gtak
 
-Window title="Hello world" box=vertical
+GtkWindow title="Hello world" box=vertical
   Label&label text="Welcome to todo app!"
   Box orient=horizontal
     Label text="Enter your todo here"

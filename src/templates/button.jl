@@ -1,6 +1,6 @@
 struct GtakButtonBackend <: GtakBackend end
 function Efus.mount!(_::GtakButtonBackend, comp::Component)::GtakMount
-  button = GtkButton(comp[:text])
+  button = GtkButton(something(comp[:text], ":-("))
   if comp.parent !== nothing && comp.parent.mount !== nothing && comp.parent.mount.outlet !== nothing
     push!(comp.parent.mount.outlet, button)
   end

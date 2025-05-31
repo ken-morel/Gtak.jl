@@ -13,7 +13,7 @@ end
 comp = efuseval"""
 using Gtak
 
-Window title="Confirm Example" box=vertical
+GtkWindow title="Confirm Example" box=vertical
   Label text="This is a test of the Gtak library with Efus."
 """Main
 checkerr(comp)

@@ -12,16 +12,7 @@ function Efus.update!(_::GtakButtonBackend, comp::Component)
   comp.mount === nothing && return
   set_gtk_property!(comp.mount.widget, :label, comp[:text])
 end
-function _gtakbuttonconnectsignals(comp::Component, button::GtkButton)
-  signal_connect(button, "clicked") do _
-    if comp[:onclick] !== nothing
-      comp[:onclick](comp)
-      if comp.dirty
-        update!(master(comp))
-      end
-    end
-  end
-end
+
 function Efus.unmount!(_::GtakButtonBackend, comp::Component)
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
@@ -34,7 +25,7 @@ GtakEntry = Template(
   :Button,
   GtakEntryBackend(),
   [
-    :var! => EReactive,
+    :var! => Efus.EReactant,
   ]
 )
 registertemplate(:Gtak, GtakButton)

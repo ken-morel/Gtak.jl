@@ -8,7 +8,7 @@ show = true
 page = efuseval"""
 using Gtak
 
-Window title="Hello world" box=vertical
+GtkWindow title="Hello world" box=vertical
   if show:
     Label text="Shown finally"
   else:

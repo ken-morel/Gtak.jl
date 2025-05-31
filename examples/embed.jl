@@ -51,7 +51,7 @@ end
 comp = efuseval"""
 using Gtak
 
-Window title="Confirm Example" size=500x400px
+GtkWindow title="Confirm Example" size=500x400px
   Confirm question="Do you want to continue?" callback=((r) -> responded(1, r))
 """Main
 

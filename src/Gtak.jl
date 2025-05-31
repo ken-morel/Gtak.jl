@@ -2,7 +2,7 @@ module Gtak
 
 
 using ..Efus
-using ..Efus: evaluateargs!, master, update!, @efuseval_str, mount!, iserror, queryone, remount!, rerender!
+using ..Efus: evaluateargs!, master, update!, @efuseval_str, mount!, iserror, queryone, remount!, rerender!, format
 using Gtk
 using Gtk: GtkWidget
 
@@ -25,4 +25,5 @@ end
 
 include("template.jl")
 include("templates.jl")
+include("window.jl")
 end
