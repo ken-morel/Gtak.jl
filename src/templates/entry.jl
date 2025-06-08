@@ -1,31 +1,31 @@
 struct GtakEntryBackend <: GtakBackend end
-function Efus.mount!(_::GtakEntryBackend, comp::Component)::GtakMount
-  button = GtkEntry(comp[:text])
-  if comp.parent !== nothing && comp.parent.mount !== nothing && comp.parent.mount.outlet !== nothing
-    push!(comp.parent.mount.outlet, button)
+function Efus.mount!(_::GtakEntryBackend, comp::Component; _...)::GtakEntryMount
+  variable = comp[:var]
+  entry = GtkEntry()
+  if !isnothing(comp.parent) && !isnothing(comp.parent.mount) && !isnothing(comp.parent.mount.outlet)
+    push!(comp.parent.mount.outlet, entry)
   end
-  _gtakbuttonconnectsignals(comp, button)
-  comp.mount = GtakMount(button)
+  comp.mount = GtakEntryMount(entry, variable)
 end
-function Efus.update!(_::GtakButtonBackend, comp::Component)
+function Efus.update!(_::GtakEntryBackend, comp::Component)
   evaluateargs!(comp)
   comp.mount === nothing && return
-  set_gtk_property!(comp.mount.widget, :label, comp[:text])
 end
 
-function Efus.unmount!(_::GtakButtonBackend, comp::Component)
+function Efus.unmount!(_::GtakEntryBackend, comp::Component)
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
-    comp.mount.widget === nothing || destroy(comp.mount.widget)
+    # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
     comp.mount = nothing
   end
 end
 
 GtakEntry = Template(
-  :Button,
+  :Entry,
   GtakEntryBackend(),
   [
     :var! => Efus.EReactant,
   ]
 )
-registertemplate(:Gtak, GtakButton)
+
+#TODO: Actually set the parents

@@ -1,7 +1,5 @@
-include("../../Efus/src/Efus.jl")
-include("../src/Gtak.jl")
-
-using .Gtak
+using Gtak
+using Efus: @efus_str, iserror
 
 show = true
 
@@ -25,4 +23,5 @@ else
   else
     mainloop(window)
   end
+  println("created window")
 end

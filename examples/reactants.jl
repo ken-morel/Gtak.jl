@@ -1,9 +1,6 @@
-include("../../Efus/src/Efus.jl")
-include("../src/Gtak.jl")
-
-using .Gtak
-using .Efus
-using .Efus: render!, TemplateParameter, CustomTemplate, onrender, onmount, @efus_str, @efuseval_str, iserror, remount!, query, EReactant, notify!
+using Gtak
+using Efus
+using Efus: render!, TemplateParameter, CustomTemplate, onrender, onmount, @efus_str, @efuseval_str, iserror, remount!, query, EReactant, notify!
 
 function checkerr(val)
   if iserror(val)
@@ -29,12 +26,11 @@ Calculator = CustomTemplate(
 """
 ) do calco, namespace
   namespace[:calcocontent] = content = EReactant(calco[:text])
-  disp(txt::String) = notify!(content, content.value * txt)
   onrender(calco) do render
     parent = render.render
     isnothing(parent) && return
     for button in query(parent; alias=:key)
-      button[:onclick] = (_) -> disp(button[:text])
+      button[:onclick] = (_) -> notify!(content, content.value * button[:text])
       println("set once")
     end
   end

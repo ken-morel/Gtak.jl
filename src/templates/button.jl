@@ -25,7 +25,7 @@ end
 function Efus.unmount!(_::GtakButtonBackend, comp::Component)
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
-    comp.mount.widget === nothing || destroy(comp.mount.widget)
+    # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
     comp.mount = nothing
   end
 end
@@ -38,5 +38,4 @@ GtakButton = Template(
     :onclick => Function
   ]
 )
-registertemplate(:Gtak, GtakButton)
 

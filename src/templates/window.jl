@@ -4,7 +4,7 @@ function Efus.update!(mount::GtakMount)
     mount = mount.parent
   end
   if mount.widget isa GtkWindow
-    showall(mount.widget)
+    show(mount.widget)
   end
 end
 function Efus.mount!(_::GtakGtkWindowBackend, c::Component)::GtakMount
@@ -15,10 +15,11 @@ function Efus.mount!(_::GtakGtkWindowBackend, c::Component)::GtakMount
   end
   c[:resizable] isa Bool && (args[:resizable] = c[:resizable])
   c[:border_width] isa Int && (args[:border_width] = c[:border_width])
+  # c[:visible] isa Bool && (args[:visible] = c[:visible])
   outlet = window = GtkWindow(c[:title]; args...)
   if c[:box] isa EOrient
     outlet = (GtkBox ∘ Symbol ∘ first ∘ String)(c[:box].orient)
-    push!(window, outlet)
+    window[] = outlet
   end
   c.mount = GtakMount(window; outlet)
   for child ∈ c.children
@@ -26,8 +27,11 @@ function Efus.mount!(_::GtakGtkWindowBackend, c::Component)::GtakMount
     if iserror(err)
       @warn("Error mounting child component $(println(format(err)))\n")
     end
+    if !isnothing(err.widget)
+      window[] = err.widget
+    end
   end
-  showall(window)
+  show(window)
   c.mount
 end
 function Efus.update!(_::GtakGtkWindowBackend, comp::Component)
@@ -40,7 +44,7 @@ end
 function Efus.unmount!(_::GtakGtkWindowBackend, comp::Component)
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
-    comp.mount.widget === nothing || destroy(comp.mount.widget)
+    comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
     comp.mount = nothing
   end
 end
@@ -56,7 +60,6 @@ GtakGtkWindow = Template(
     :border_width => Int,
   ]
 )
-registertemplate(:Gtak, GtakGtkWindow)
 
 
 mainloop(win::GtakMount) = mainloop(win.widget)

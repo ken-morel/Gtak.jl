@@ -17,7 +17,7 @@ end
 function Efus.unmount!(_::GtakBoxBackend, comp::Component)
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
-    comp.mount.widget === nothing || destroy(comp.mount.widget)
+    # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
     comp.mount = nothing
   end
 end
@@ -29,5 +29,4 @@ GtakBox = Template(
     :orient! => EOrient,
   ]
 )
-registertemplate(:Gtak, GtakBox)
 

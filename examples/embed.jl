@@ -1,10 +1,6 @@
-include("../../Efus/src/Efus.jl")
-include("../src/Gtak.jl")
-
-using .Gtak
-using .Efus
-using .Efus: render!, TemplateParameter, CustomTemplate, onrender, onmount, @efus_str, @efuseval_str, iserror, remount!, update!
-using Gtk:showall
+using Gtak
+using Efus
+using Efus: render!, TemplateParameter, CustomTemplate, onrender, onmount, @efus_str, @efuseval_str, iserror, remount!, update!
 function checherr(val)
   if iserror(val)
     display(val)
@@ -51,7 +47,7 @@ end
 comp = efuseval"""
 using Gtak
 
-GtkWindow title="Confirm Example" size=500x400px
+GtkWindow title="Confirm Example"
   Confirm question="Do you want to continue?" callback=((r) -> responded(1, r))
 """Main
 
