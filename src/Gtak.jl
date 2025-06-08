@@ -1,7 +1,7 @@
 module Gtak
 
 import Efus
-using Efus: evaluateargs!, master, update!, @efuseval_str, mount!, iserror, queryone, remount!, rerender!, format, AbstractMount, TemplateBackend, registertemplatemodule, Component, Template, EOrient, ESize, EInt, EDecimal, EString, registertemplate, ESide, outlet, EReactant
+using Efus: evaluateargs!, master, update!, @efuseval_str, mount!, iserror, queryone, remount!, rerender!, format, AbstractMount, TemplateBackend, registertemplatemodule, Component, Template, EOrient, ESize, EInt, EDecimal, EString, registertemplate, ESide, outlet, EReactant, notify!, subscribe!, getvalue
 using Gtk4
 using Gtk4: GtkWidget
 

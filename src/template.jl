@@ -13,11 +13,13 @@ struct GtakMount <: AbstractGtakMount
     outlet === nothing ? widget : outlet,
   )
 end
-struct GtakEntryMount <: AbstractGtakMount
+mutable struct GtakEntryMount <: AbstractGtakMount
   parent::Union{GtkWidget,Nothing}
   widget::GtkWidget
   outlet::GtkWidget
   reactant::EReactant
+  jlupdates::Bool
+  gtkupdates::Bool
   GtakEntryMount(
     widget::GtkWidget,
     reactant::EReactant;
@@ -28,6 +30,8 @@ struct GtakEntryMount <: AbstractGtakMount
     widget,
     outlet === nothing ? widget : outlet,
     reactant,
+    true,
+    true,
   )
 end
 abstract type GtakBackend <: TemplateBackend end
