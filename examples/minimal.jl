@@ -1,5 +1,5 @@
 using Gtak
-using Efus: @efuspreeval_str
+using Efus: @efuspreeval_str, iserror
 
 page = efuspreeval"""
 using Gtak
