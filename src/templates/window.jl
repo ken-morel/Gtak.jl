@@ -49,7 +49,7 @@ function Efus.unmount!(_::GtakGtkWindowBackend, comp::Component)
   end
 end
 
-GtakGtkWindow = Template(
+GtakGtkWindow = EfusTemplate(
   :GtkWindow,
   GtakGtkWindowBackend(),
   [
@@ -62,5 +62,5 @@ GtakGtkWindow = Template(
 )
 
 
-mainloop(win::GtakMount) = mainloop(win.widget)
+mainloop(win::GtakMount) = Application.mainloop(win.widget)
 

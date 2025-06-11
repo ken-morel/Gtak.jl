@@ -1,15 +1,14 @@
 struct GtakLabelBackend <: GtakBackend end
 function Efus.mount!(_::GtakLabelBackend, c::Component)::GtakMount
-  label = GtkLabel(":-)")
+  args = []
+  label = GtkLabel(":-)"; args...)
   c[:text] isa String && Gtk4.text(label, c[:text])
   c[:markup] isa String && Gtk4.markup(label, c[:markup])
-  if c.parent !== nothing
-    parent = outlet(c.parent)
-    if parent !== nothing && parent.mount !== nothing && parent.mount.outlet !== nothing
-      push!(parent.mount.outlet, label)
-    end
-  end
   c.mount = GtakMount(label)
+  if c.parent !== nothing
+    childgeometry(c.parent, c)
+  end
+  c.mount
 end
 function Efus.update!(_::GtakLabelBackend, c::Component)
   isnothing(c.mount) && return
@@ -26,12 +25,13 @@ function Efus.unmount!(_::GtakLabelBackend, comp::Component)
   end
 end
 
-GtakLabel = Template(
+GtakLabel = EfusTemplate(
   :Label,
   GtakLabelBackend(),
   [
     :text => String,
     :markup => String,
+    COMMON_ATTRS...,
   ]
 )
 

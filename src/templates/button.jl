@@ -1,11 +1,14 @@
 struct GtakButtonBackend <: GtakBackend end
 function Efus.mount!(_::GtakButtonBackend, comp::Component)::GtakMount
-  button = GtkButton(something(comp[:text], ":-("))
-  if comp.parent !== nothing && comp.parent.mount !== nothing && comp.parent.mount.outlet !== nothing
-    push!(comp.parent.mount.outlet, button)
+  args = Pair[]
+  addcommonargs!(args, comp)
+  button = GtkButton(something(comp[:text], ":-("); args...)
+  comp.mount = GtakMount(button)
+  if comp.parent !== nothing
+    childgeometry(comp.parent, comp)
   end
   _gtakbuttonconnectsignals(comp, button)
-  comp.mount = GtakMount(button)
+  comp.mount
 end
 function Efus.update!(_::GtakButtonBackend, comp::Component)
   evaluateargs!(comp)
@@ -30,12 +33,13 @@ function Efus.unmount!(_::GtakButtonBackend, comp::Component)
   end
 end
 
-GtakButton = Template(
+GtakButton = EfusTemplate(
   :Button,
   GtakButtonBackend(),
   [
     :text! => String,
-    :onclick => Function
+    :onclick => Function,
+    COMMON_ATTRS...,
   ]
 )
 

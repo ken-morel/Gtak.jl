@@ -1,12 +1,15 @@
 struct GtakBoxBackend <: GtakBackend end
 function Efus.mount!(_::GtakBoxBackend, c::Component)::GtakMount
-  box = (GtkBox ∘ Symbol ∘ first ∘ String)(c[:orient].orient)
+  args = Pair[]
+  addcommonargs!(args, c)
+  orient = (Symbol ∘ first ∘ String)(c[:orient].orient)
+  box = GtkBox(orient; args...)
   c.mount = GtakMount(box)
   for child ∈ c.children
     mount!(child)
   end
-  if c.parent !== nothing && c.parent.mount !== nothing && c.parent.mount.outlet !== nothing
-    push!(c.parent.mount.outlet, box)
+  if c.parent !== nothing
+    childgeometry(c.parent, c)
   end
   c.mount
 end
@@ -22,11 +25,12 @@ function Efus.unmount!(_::GtakBoxBackend, comp::Component)
   end
 end
 
-GtakBox = Template(
+GtakBox = EfusTemplate(
   :Box,
   GtakBoxBackend(),
   [
     :orient! => EOrient,
+    COMMON_ATTRS...,
   ]
 )
 

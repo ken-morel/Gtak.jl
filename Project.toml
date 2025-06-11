@@ -1,15 +1,13 @@
 name = "Gtak"
 uuid = "a3bce912-7891-4ecb-9303-45bc44922d80"
-version = "0.1.0"
 authors = ["Engon Ken Morel <engonken8@gmail.com> and contributors"]
+version = "0.1.0"
 
 [deps]
+Atak = "ea1fb407-d168-472b-9d3b-6f44c48cad5b"
 Efus = "9109e250-8bcb-41d8-9faa-e136e3e06a79"
 Gtk4 = "9db2cae5-386f-4011-9d63-a5602296539b"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
-
-[sources]
-Efus = { path = "../Efus.jl" }
 
 [compat]
 Gtk4 = "0.7.7"
