@@ -1,5 +1,4 @@
 struct PageBuildContext
-  using Gtk4: update_texture
   app::Atak.Application
   window::AbstractGtakWindow
   PageBuildContext(app::Atak.Application, win::AbstractGtakWindow) = new(app, win)

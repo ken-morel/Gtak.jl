@@ -3,9 +3,17 @@ using Gtk4
 using Efus
 using Efus: TemplateParameter
 using Atak
+using Atak.Store
 
 export runapp, mainloop, init!, Page, PageRoute, PageBuilder
 export TemplateParameter, GtakApplication
+
+export datastore, namespace, document, collection
+export DataStore, Namespace, Document, Collection
+export update!, edit!, set!, get
+
+export configdir
+
 abstract type AbstractGtakWindow end
 
 include("page.jl")
@@ -13,31 +21,35 @@ include("router.jl")
 include("window.jl")
 
 mutable struct GtakApplication <: Atak.Application
+  initializer::Function
+  id::String
   toplevel::Union{GtakWindow,Nothing}
   homepage::PageRoute
   namespace::AbstractNamespace
-  csspath::Union{String,Nothing}
-  css::Union{String,Nothing}
-  function GtakApplication(;
+  store::Union{DataStore,Nothing}
+  data::Dict
+  function GtakApplication(
+    initializer::Function;
+    id::String,
     homepage::PageRoute,
-    cssfile::String,
     namespace::Union{AbstractNamespace,Nothing}=nothing,
   )
     new(
+      initializer,
+      id,
       nothing,
       homepage,
       isnothing(namespace) ? DictNamespace() : namespace,
-      cssfile,
       nothing,
+      Dict(),
     )
   end
 end
-
 function init!(app::GtakApplication)
-  if !isnothing(app.csspath) || !isnothing(app.css)
-    provider = Gtk4.GtkCssProvider(app.css, app.csspath)
-    # Gtk4.add_provider_for_display(Gtk4.GtkDisplay(), provider, Gtk4.GTK_STYLE_PROVIDER_PRIORITY_USER)
-  end
+  app.initializer(app)
+end
+function configdir(app::GtakApplication)::String
+  joinpath(homedir(), ".config", app.id) |> mkpath
 end
 function createwindow(app::GtakApplication)
   window = creategtakwindow()
