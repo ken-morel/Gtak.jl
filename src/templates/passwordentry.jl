@@ -50,7 +50,7 @@ GtakPasswordEntry = EfusTemplate(
   :PasswordEntry,
   GtakPasswordEntryBackend(),
   [
-    :var! => Efus.EReactant,
+    :var! => Efus.AbstractReactant,
     COMMON_ATTRS...,
   ]
 )

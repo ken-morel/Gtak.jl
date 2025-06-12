@@ -11,7 +11,6 @@ function creategtakwindow(homepage::Union{Page,Nothing}=nothing; options...)
     router, window, observer
   )
   subscribe!(router, observer) do _
-    println("updating window content")
     errormonitor(@async updatecontent!(gtakwindow))
   end
   gtakwindow

@@ -17,12 +17,12 @@ mutable struct GtakEntryMount <: AbstractGtakMount
   parent::Union{GtkWidget,Nothing}
   widget::GtkWidget
   outlet::GtkWidget
-  reactant::EReactant
+  reactant::Efus.AbstractReactant
   jlupdates::Bool
   gtkupdates::Bool
   GtakEntryMount(
     widget::GtkWidget,
-    reactant::EReactant;
+    reactant::Efus.AbstractReactant;
     outlet::Union{GtkWidget,Nothing}=nothing,
     parent::Union{GtkWidget,Nothing}=nothing,
   ) = new(

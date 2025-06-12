@@ -1,7 +1,8 @@
 struct PageBuildContext
   app::Atak.Application
   window::AbstractGtakWindow
-  PageBuildContext(app::Atak.Application, win::AbstractGtakWindow) = new(app, win)
+  onmount::Union{Function,Nothing}
+  PageBuildContext(app::Atak.Application, win::AbstractGtakWindow) = new(app, win, nothing)
 end
 struct Page <: Atak.AbstractRouterPage
   component::AbstractComponent
@@ -15,35 +16,51 @@ struct PageBuilder <: Atak.AbstractPageBuilder{Page}
   initializer::Function
   code::ECode
 end
-function Base.push!(ctx::PageBuildContext, builder::PageBuilder; args...)
+
+function onmount(fn::Function, ctx::PageBuildContext)
+  ctx.onmount = fn
+end
+function Base.push!(
+  ctx::PageBuildContext, builder::Union{PageBuilder,Function};
+  args...,  # just to be explicit, builder is also a Function
+)
   errormonitor(@async begin
     page = builder(ctx)
-    println("pushing bulid page to push in")
     push!(ctx.window.router, page; args...)
-    println("pushed in the browser")
   end)
 end
+Base.push!(builder::Function, ctx::PageBuildContext; args...) =
+  push!(ctx, builder; args...)
+
+function Base.push!(
+  ctx::PageBuildContext, page::Page;
+  args...,  # just to be explicit, builder is also a Function
+)
+  errormonitor(@async begin
+    push!(ctx.window.router, page; args...)
+  end)
+end
+
 function Base.pop!(ctx::PageBuildContext; args...)
   errormonitor(@async begin
-    println("poping in the browser")
     pop!(ctx.window.router; args...)
-    println("poped in the browser")
   end)
 end
 
 
 
 
-function (builder::PageBuilder)(ctx::PageBuildContext)::Page
+function (builder::PageBuilder)(ctx::PageBuildContext; args...)::Page
   namespace = DictNamespace(ctx.app.namespace)
-  onmount = builder.initializer(namespace, ctx)
-  ctx = EfusEvalContext(namespace)
-  component = eval!(ctx, builder.code)
+  builder.initializer(namespace, ctx, args)
+  evalctx = EfusEvalContext(namespace)
+  component = eval!(evalctx, builder.code)
   if iserror(component)
-    throw(Efus.format(component))
+    println(Efus.format(component))
+    throw(component)
   end
-  if onmount isa Function
-    onmount(component)
+  if ctx.onmount isa Function
+    ctx.onmount(component)
   end
   Page(component, namespace)
 end

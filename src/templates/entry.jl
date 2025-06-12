@@ -48,7 +48,7 @@ GtakEntry = EfusTemplate(
   :Entry,
   GtakEntryBackend(),
   [
-    :var! => Efus.EReactant,
+    :var! => Efus.AbstractReactant,
     COMMON_ATTRS...,
   ]
 )
