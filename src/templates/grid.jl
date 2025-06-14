@@ -1,7 +1,6 @@
 struct GtakGridBackend <: GtakBackend end
-function Efus.mount!(_::GtakGridBackend, c::Component)::GtakMount
+function Efus.mount!(c::Component{GtakGridBackend})::GtakMount
   args = Pair[]
-
   addcommonargs!(args, c)
   grid = GtkGrid(; args...)
   c.mount = GtakMount(grid)
@@ -13,19 +12,8 @@ function Efus.mount!(_::GtakGridBackend, c::Component)::GtakMount
   end
   c.mount
 end
-function Efus.update!(_::GtakGridBackend, comp::Component)
-  comp.mount === nothing && return
-  update!.(comp.children)
-end
-function Efus.unmount!(_::GtakGridBackend, comp::Component)
-  Efus.unmount!.(comp.children)
-  if comp.mount !== nothing && comp.mount.widget !== nothing
-    # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
-    comp.mount = nothing
-  end
-end
 function childgeometry(
-  backend::GtakGridBackend, parent::Component, child::AbstractComponent
+  parent::Component{GtakGridBackend}, child::AbstractComponent
 )
   attach = child[:attach]
   if attach isa ESquareGeometry
@@ -38,9 +26,9 @@ end
 
 GtakGrid = EfusTemplate(
   :Grid,
-  GtakGridBackend(),
-  [
-    :spacing => ESize,
+  GtakGridBackend,
+  TemplateParameter[
+    :spacing=>ESize,
     COMMON_ATTRS...,
   ]
 )

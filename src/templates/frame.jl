@@ -1,5 +1,5 @@
 struct GtakFrameBackend <: GtakBackend end
-function Efus.mount!(_::GtakFrameBackend, c::Component)::GtakMount
+function Efus.mount!(c::Component{GtakFrameBackend})::GtakMount
   args = Pair[]
   addcommonargs!(args, c)
   frame = GtkFrame(; args...)
@@ -12,11 +12,11 @@ function Efus.mount!(_::GtakFrameBackend, c::Component)::GtakMount
   end
   c.mount
 end
-function Efus.update!(_::GtakFrameBackend, comp::Component)
+function Efus.update!(comp::Component{GtakFrameBackend})
   comp.mount === nothing && return
   update!.(comp.children)
 end
-function Efus.unmount!(_::GtakFrameBackend, comp::Component)
+function Efus.unmount!(comp::Component{GtakFrameBackend})
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
     # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
@@ -24,15 +24,15 @@ function Efus.unmount!(_::GtakFrameBackend, comp::Component)
   end
 end
 function childgeometry(
-  backend::GtakFrameBackend, parent::Component, child::AbstractComponent
+  parent::Component{GtakFrameBackend}, child::AbstractComponent
 )
   parent.mount.outlet[] = inlet(child).mount.widget
 end
 
 GtakFrame = EfusTemplate(
   :Frame,
-  GtakFrameBackend(),
-  [
+  GtakFrameBackend,
+  TemplateParameter[
     COMMON_ATTRS...,
   ]
 )

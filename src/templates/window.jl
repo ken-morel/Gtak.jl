@@ -1,13 +1,6 @@
 struct GtakGtkWindowBackend <: GtakBackend end
-function Efus.update!(mount::GtakMount)
-  while mount.parent !== nothing
-    mount = mount.parent
-  end
-  if mount.widget isa GtkWindow
-    show(mount.widget)
-  end
-end
-function Efus.mount!(_::GtakGtkWindowBackend, c::Component)::GtakMount
+
+function Efus.mount!(c::Component{GtakGtkWindowBackend})::GtakMount
   args = Dict{Symbol,Any}()
   if c[:size] isa ESize
     args[:width] = c[:size].width
@@ -34,14 +27,14 @@ function Efus.mount!(_::GtakGtkWindowBackend, c::Component)::GtakMount
   show(window)
   c.mount
 end
-function Efus.update!(_::GtakGtkWindowBackend, comp::Component)
+function Efus.update!(comp::Component{GtakGtkWindowBackend})
   if comp.dirty
     evaluateargs!(comp)
     set_gtk_property!(comp.mount.widget, :title, comp[:title])
   end
   update!.(comp.children)
 end
-function Efus.unmount!(_::GtakGtkWindowBackend, comp::Component)
+function Efus.unmount!(comp::Component{GtakGtkWindowBackend})
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
     comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
@@ -51,8 +44,8 @@ end
 
 GtakGtkWindow = EfusTemplate(
   :GtkWindow,
-  GtakGtkWindowBackend(),
-  [
+  GtakGtkWindowBackend,
+  TemplateParameter[
     :title! => String,
     :box => EOrient,
     :size => ESize{Int,:px},
@@ -60,7 +53,6 @@ GtakGtkWindow = EfusTemplate(
     :border_width => Int,
   ]
 )
-
 
 mainloop(win::GtakMount) = Application.mainloop(win.widget)
 

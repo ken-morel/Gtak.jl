@@ -6,7 +6,6 @@ using Gtk4
 using Gtk4: GtkWidget
 using Atak
 
-
 include("templates/templates.jl")
 
 include("Application/Application.jl")

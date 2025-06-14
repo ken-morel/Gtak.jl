@@ -37,20 +37,6 @@ end
 abstract type GtakBackend <: TemplateBackend end
 
 
-function childgeometry(parent::Component, child::AbstractComponent)
-  childgeometry(
-    outlet(parent).template.backend,
-    outlet(parent),
-    child,
-  )
-end
-
-function childgeometry(
-  backend::GtakBackend, parent::Component, child::AbstractComponent
-)
-  push!(parent.mount.outlet, inlet(child).mount.widget)
-end
-
 
 
 """
@@ -81,6 +67,10 @@ function addcommonargs!(args::Vector{Pair}, c::Component)
   c[:spacing] isa Bool && push!(args, :spacing => ALIGNS[c[:spacing]])
   c[:hexpand] isa Symbol && push!(args, :hexpand => ALIGNS[c[:hexpand]])
   c[:vexpand] isa Symbol && push!(args, :vexpand => ALIGNS[c[:vexpand]])
+  c[:hastooltip] isa Bool && push!(args, :has_tooltip => c[:hastooltip])
+  c[:tooltip_markup] isa Bool && push!(args, :tooltip_markup => c[:tooltip_markup])
+  c[:tooltip_text] isa Bool && push!(args, :tooltip_text => c[:tooltip_text])
+  c[:visible] isa Bool && push!(args, :visible => c[:visible])
   if c[:spacing] isa ESize
     push!(args, :row_spacing => c[:spacing].height)
     push!(args, :column_spacing => c[:spacing].width)
@@ -99,4 +89,26 @@ COMMON_ATTRS = [
   :attach => ESquareGeometry{Int,Any},
   :hexpand => Bool,
   :vexpand => Bool,
+  :hastooltip => Bool,
+  :tooltip_markup => String,
+  :tooltip_text => String,
+  :visible => Bool,
 ]
+function childgeometry(
+  parent::Component{<:GtakBackend}, child::AbstractComponent
+)
+  push!(parent.mount.outlet, inlet(child).mount.widget)
+end
+
+
+function Efus.update!(comp::Component{<:GtakBackend})
+  comp.mount === nothing && return
+  update!.(comp.children)
+end
+function Efus.unmount!(comp::Component{<:GtakBackend})
+  Efus.unmount!.(comp.children)
+  if comp.mount !== nothing && comp.mount.widget !== nothing
+    # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
+    comp.mount = nothing
+  end
+end

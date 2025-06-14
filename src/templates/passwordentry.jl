@@ -1,5 +1,5 @@
 struct GtakPasswordEntryBackend <: GtakBackend end
-function Efus.mount!(::GtakPasswordEntryBackend, comp::Component; args...)::GtakEntryMount
+function Efus.mount!(comp::Component{GtakPasswordEntryBackend})
   variable = comp[:var]
   args = Pair[]
   addcommonargs!(args, comp)
@@ -33,23 +33,11 @@ function Efus.mount!(::GtakPasswordEntryBackend, comp::Component; args...)::Gtak
   end
   comp.mount
 end
-function Efus.update!(::GtakPasswordEntryBackend, comp::Component; args...)
-  evaluateargs!(comp)
-  comp.mount === nothing && return
-end
-
-function Efus.unmount!(::GtakPasswordEntryBackend, comp::Component; args...)
-  Efus.unmount!.(comp.children)
-  if comp.mount !== nothing && comp.mount.widget !== nothing
-    # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
-    comp.mount = nothing
-  end
-end
 
 GtakPasswordEntry = EfusTemplate(
   :PasswordEntry,
-  GtakPasswordEntryBackend(),
-  [
+  GtakPasswordEntryBackend,
+  TemplateParameter[
     :var! => Efus.AbstractReactant,
     COMMON_ATTRS...,
   ]

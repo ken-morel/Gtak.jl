@@ -1,9 +1,11 @@
-struct GtakEntryBackend <: GtakBackend end
-function Efus.mount!(::GtakEntryBackend, comp::Component; args...)::GtakEntryMount
+struct GtakEntryBackend <: GtakBackend
+end
+function Efus.mount!(comp::Component{GtakEntryBackend})::GtakEntryMount
   args = Pair[]
   variable = comp[:var]
   addcommonargs!(args, comp)
-  entry = GtkEntry(; text=something(getvalue(variable), ""), args...)
+  push!(args, :text => something(getvalue(variable), ""))
+  entry = GtkEntry(; args...)
   mount = GtakEntryMount(entry, variable)
   comp.mount = mount
   signal_connect(entry, "changed") do entry
@@ -31,12 +33,12 @@ function Efus.mount!(::GtakEntryBackend, comp::Component; args...)::GtakEntryMou
   end
   comp.mount
 end
-function Efus.update!(::GtakEntryBackend, comp::Component; args...)
+function Efus.update!(comp::Component{GtakEntryBackend})
   evaluateargs!(comp)
   comp.mount === nothing && return
 end
 
-function Efus.unmount!(::GtakEntryBackend, comp::Component; args...)
+function Efus.unmount!(comp::Component{GtakEntryBackend})
   Efus.unmount!.(comp.children)
   if comp.mount !== nothing && comp.mount.widget !== nothing
     # comp.mount.widget === nothing || Gtk4.destroy(comp.mount.widget)
@@ -46,8 +48,8 @@ end
 
 GtakEntry = EfusTemplate(
   :Entry,
-  GtakEntryBackend(),
-  [
+  GtakEntryBackend,
+  TemplateParameter[
     :var! => Efus.AbstractReactant,
     COMMON_ATTRS...,
   ]
