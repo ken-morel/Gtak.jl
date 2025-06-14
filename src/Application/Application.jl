@@ -10,7 +10,7 @@ export TemplateParameter, GtakApplication
 
 export datastore, namespace, document, collection
 export DataStore, Namespace, Document, Collection
-export update!, edit!, set!
+export update!, alter!, set!
 export configdir, onmount
 
 abstract type AbstractGtakWindow end
