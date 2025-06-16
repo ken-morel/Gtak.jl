@@ -2,6 +2,7 @@ struct GtakLabelBackend <: GtakBackend end
 function Efus.mount!(c::Component{GtakLabelBackend})::GtakMount
   args = Pair[]
   addcommonargs!(args, c)
+  c[:justify] isa Gtk4.Justification && push!(args, :justify => c[:justify])
   label = GtkLabel(":-)"; args...)
   c[:text] isa String && Gtk4.text(label, c[:text])
   c[:markup] isa String && Gtk4.markup(label, c[:markup])
@@ -24,6 +25,7 @@ GtakLabel = EfusTemplate(
   TemplateParameter[
     :text=>String,
     :markup=>String,
+    :justify=>Gtk4.Justification,
     COMMON_ATTRS...,
   ]
 )

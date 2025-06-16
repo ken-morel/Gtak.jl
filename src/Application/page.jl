@@ -4,9 +4,14 @@ struct PageBuildContext
   onmount::Union{Function,Nothing}
   PageBuildContext(app::Atak.Application, win::AbstractGtakWindow) = new(app, win, nothing)
 end
-struct Page <: Atak.AbstractRouterPage
+mutable struct Page <: Atak.AbstractRouterPage
   component::AbstractComponent
   namespace::AbstractNamespace
+  builder::Union{Function,Nothing}
+  rebuildable::Bool
+  Page(comp::AbstractComponent, nmsp::AbstractNamespace) = new(comp, nmsp, nothing, false)
+  Page(comp::AbstractComponent, nmsp::AbstractNamespace, builder::Function) =
+    new(comp, nmsp, builder, true)
 end
 struct PageRoute <: Atak.AbstractPageBuilder{Page}
   fn::Function
@@ -26,7 +31,16 @@ function Base.push!(
 )
   errormonitor(@async begin
     page = builder(ctx)
-    push!(ctx.window.router, page; args...)
+    if isnothing(page.builder)
+      page.builder = builder
+      page.rebuildable = true
+    end
+    if !Efus.iserror(page)
+      push!(ctx.window.router, page; args...)
+    else
+      Efus.display(page)
+      throw(page)
+    end
   end)
 end
 Base.push!(builder::Function, ctx::PageBuildContext; args...) =
@@ -62,13 +76,17 @@ function (builder::PageBuilder)(ctx::PageBuildContext; args...)::Page
   if ctx.onmount isa Function
     ctx.onmount(component)
   end
-  Page(component, namespace)
+  Page(component, namespace, (newctx) -> builder(newctx; args...))
 end
 function (route::PageRoute)(ctx::PageBuildContext)::Page
   mnt = route.fn(ctx)
   if iserror(mnt)
     throw(mnt)
   else
+    if isnothing(mnt.builder)
+      mnt.builder = route
+      mnt.rebuildable = true
+    end
     mnt
   end
 end

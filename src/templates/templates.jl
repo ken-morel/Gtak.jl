@@ -11,6 +11,7 @@ include("passwordentry.jl")
 include("frame.jl")
 include("grid.jl")
 include("image.jl")
+include("separator.jl")
 
 
 function eregister()
@@ -23,4 +24,5 @@ function eregister()
   registertemplate(:Gtak, GtakGrid)
   registertemplate(:Gtak, GtakPasswordEntry)
   registertemplate(:Gtak, GtakImage)
+  registertemplate(:Gtak, GtakSeparator)
 end

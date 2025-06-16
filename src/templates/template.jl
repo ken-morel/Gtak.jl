@@ -39,15 +39,7 @@ abstract type GtakBackend <: TemplateBackend end
 
 
 
-"""
-Align_FILL = 0
-Align_START = 1
-Align_END = 2
-Align_CENTER = 3
-Align_BASELINE_FILL = 4
-Align_BASELINE = 4
-Align_BASELINE_CENTER = 5
-"""
+
 const ALIGNS = Dict{Symbol,Gtk4.Align}(
   :fill => Gtk4.Align_FILL,
   :start => Gtk4.Align_START,
@@ -61,20 +53,24 @@ const ALIGNS = Dict{Symbol,Gtk4.Align}(
   :bcenter => Gtk4.Align_BASELINE_CENTER,
   :baseline => Gtk4.Align_BASELINE,
 )
+Base.convert(::Type{Gtk4.Align}, val::Efus.ESymbol) = ALIGNS[val.value]
+const JUSTIFIES = Dict{Symbol,Gtk4.Justification}(
+  :left => Gtk4.Justification_LEFT,
+  :right => Gtk4.Justification_RIGHT,
+  :center => Gtk4.Justification_CENTER,
+  :fill => Gtk4.Justification_FILL,
+)
+Base.convert(::Type{Gtk4.Justification}, val::Efus.ESymbol) = JUSTIFIES[val.value]
 function addcommonargs!(args::Vector{Pair}, c::Component)
-  c[:valign] isa Symbol && push!(args, :valign => ALIGNS[c[:valign]])
-  c[:halign] isa Symbol && push!(args, :halign => ALIGNS[c[:halign]])
-  c[:spacing] isa Bool && push!(args, :spacing => ALIGNS[c[:spacing]])
-  c[:hexpand] isa Symbol && push!(args, :hexpand => ALIGNS[c[:hexpand]])
-  c[:vexpand] isa Symbol && push!(args, :vexpand => ALIGNS[c[:vexpand]])
+  c[:valign] isa Gtk4.Align && push!(args, :valign => c[:valign])
+  c[:halign] isa Gtk4.Align && push!(args, :halign => c[:halign])
+  c[:hexpand] isa Bool && push!(args, :hexpand => c[:hexpand])
+  c[:vexpand] isa Bool && push!(args, :vexpand => c[:vexpand])
   c[:hastooltip] isa Bool && push!(args, :has_tooltip => c[:hastooltip])
   c[:tooltip_markup] isa Bool && push!(args, :tooltip_markup => c[:tooltip_markup])
-  c[:tooltip_text] isa Bool && push!(args, :tooltip_text => c[:tooltip_text])
+  c[:tooltip_text] isa String && push!(args, :tooltip_text => c[:tooltip_text])
   c[:visible] isa Bool && push!(args, :visible => c[:visible])
-  if c[:spacing] isa ESize
-    push!(args, :row_spacing => c[:spacing].height)
-    push!(args, :column_spacing => c[:spacing].width)
-  end
+
   if c[:margin] isa EEdgeInsets
     push!(args, :margin_top => c[:margin].top)
     push!(args, :margin_bottom => c[:margin].bottom)
@@ -83,8 +79,8 @@ function addcommonargs!(args::Vector{Pair}, c::Component)
   end
 end
 COMMON_ATTRS = [
-  :halign => Symbol,
-  :valign => Symbol,
+  :halign => Gtk4.Align,
+  :valign => Gtk4.Align,
   :margin => EEdgeInsets{Int,Any},
   :attach => ESquareGeometry{Int,Any},
   :hexpand => Bool,

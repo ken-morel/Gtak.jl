@@ -2,6 +2,10 @@ struct GtakGridBackend <: GtakBackend end
 function Efus.mount!(c::Component{GtakGridBackend})::GtakMount
   args = Pair[]
   addcommonargs!(args, c)
+  if c[:spacing] isa ESize
+    push!(args, :row_spacing => c[:spacing].height)
+    push!(args, :column_spacing => c[:spacing].width)
+  end
   grid = GtkGrid(; args...)
   c.mount = GtakMount(grid)
   for child ∈ c.children
