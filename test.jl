@@ -6,7 +6,14 @@ application("cm.engon.gtak.test") do app
     window(app) do win
         win.title = "First Window"
         page"""
-        Label text="Hello world"
+        VBox
+          Label text="Hello world"
+          Label text="Hello ama"
+          HBox
+            Label text=|
+              "Hello ama"
+            Label text=|
+              "Horizontal"
         """
     end
 end |> run

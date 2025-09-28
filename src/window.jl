@@ -32,6 +32,10 @@ function mount!(w::Window, a::AbstractGtakApplication)::GtkApplicationWindow
     return w.window
 end
 
+function show(w::Window, p::Page)
+    return w.window[] = mount!(p)
+end
+
 function unmount!(w::Window)
     if !isnothing(w.window)
         destroy(w.window)
