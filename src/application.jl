@@ -15,6 +15,8 @@ function application(init::Function, id::String)
     return app
 end
 
+reload!(a::Application) = reload!.(a.windows)
+
 function Base.run(app::Application)
     if isnothing(app.app)
         mount!(app)
