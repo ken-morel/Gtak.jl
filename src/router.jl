@@ -1,10 +1,10 @@
 export Router
 
-
 struct Router
     history::Vector{AbstractPage}
     current_page::Reactant{Union{AbstractPage, Nothing}}
-    Router() = new([], Reactant{Union{AbstractPage, Nothing}}(nothing))
+    bin::DirtBin
+    Router(bin::DirtBin) = new([], Reactant{Union{AbstractPage, Nothing}}(nothing), bin)
 end
 
 function Base.push!(r::Router, p::AbstractPage; replace::Bool = false)
@@ -14,21 +14,26 @@ function Base.push!(r::Router, p::AbstractPage; replace::Bool = false)
             push!(r.history, page)
         end
     end
-    return setvalue!(r.current_page, p)
+    setbin!(p, r.bin)
+    setvalue!(r.current_page, p)
+    return p
 end
+
 function Base.pop!(r::Router)
-    return if isempty(r.history)
-        setvalue!(r.current_page, nothing)
-    else
-        setvalue!(r.current_page, r.history[end])
-        pop!(r.history)
+    current = getvalue(r.current_page)
+    if !isnothing(current)
+        setbin!(current, nothing)
     end
+    page = isempty(r.history) ? nothing : pop!(r.history)
+    setvalue!(r.current_page, page)
+    return page
 end
 
 function reload!(r::Router; all::Bool = false)
     if all
-        reload!.(r.history)
+        foreach(reload!, r.history)
     end
+
     page = getvalue(r.current_page)
     return if !isnothing(page)
         reload!(page)

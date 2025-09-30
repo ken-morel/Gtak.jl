@@ -1,2 +1,82 @@
 include("./label.jl")
+include("./button.jl")
 include("./box.jl")
+
+getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
+getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
+
+function getpage(c::GtakComponent)
+    current = c
+    while (parent = getparent(current)) !== nothing && parent !== current && !isa(current, AbstractPage)
+        current = parent
+    end
+    return if current isa AbstractPage
+        current
+    end
+end
+function isdirty(c::GtakComponent)
+    return hasproperty(c, :dirty) && !isempty(c.dirty)
+end
+
+function shaketree(c::GtakComponent)
+    page = getpage(c)
+    if !isnothing(page)
+        refresh(page)
+    end
+    return
+end
+
+function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[:widget])
+    c.parent = nothing
+    denature!(c.catalyst)
+    children = getchildren(c)
+    if !isnothing(children)
+        foreach(unmount!, c.children)
+    end
+
+    for widget in widgets
+        if hasproperty(c, widget) && !isnothing(getfield(c, widget))
+            widget_obj = getfield(c, widget)
+            #TODO: Destroy the widget properly
+            setproperty!(c, widget, nothing)
+        end
+    end
+    return
+end
+
+@inline function _trackreactiveattributes(c::GtakComponent)
+    for attr in params(typeof(c))
+        val = getfield(c, attr)
+        if val isa AbstractReactive
+            catalyze!(c.catalyst, val) do _
+                dirty!(c, attr)
+                return
+            end
+        end
+    end
+    return
+end
+function _updates(fn::Function, c::GtakComponent)
+    !ismounted(c) && return
+    while !isempty(c.dirty)
+        key = pop!(c.dirty)
+        fn(key)
+    end
+    return
+end
+
+@inline function dirty!(c::GtakComponent, attr::Symbol)
+    if hasproperty(c, :dirty)
+        push!(c.dirty, attr)
+    end
+    return
+end
+@inline function dirty!(c::GtakComponent, attr::Symbol, value)
+    if hasproperty(c, attr)
+        setfield!(c, attr, value)
+        dirty!(c, attr)
+    end
+    return
+end
+
+ismounted(c::GtakComponent) = !isnothing(c.widget)

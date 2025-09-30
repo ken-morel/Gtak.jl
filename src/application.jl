@@ -1,34 +1,38 @@
-export AbstractGtakApplication, Application, application
+export AbstractGtakApplication, Application, application, reload!
 
 Base.@kwdef mutable struct Application <: AbstractGtakApplication
     id::String
-    windows::Vector{Window} = []
+    windows::Vector{AbstractGtakWindow} = []
     app::Union{GtkApplication, Nothing} = nothing
+    bin::DirtBin = DirtBin()
 end
 
-Base.push!(app::Application, win::Window) = push!(app.windows, win)
+Base.push!(app::Application, win::AbstractGtakWindow) = push!(app.windows, win)
 
-function application(init::Function, id::String)
-    app = Application(; id)
+function application(init::Function, id::String; bin::DirtBin = DirtBin())
+    app = Application(; id, bin)
     init(app)
     mount!(app)
     return app
 end
 
-reload!(a::Application) = reload!.(a.windows)
+reload!(a::Application; all = false) = foreach(w -> reload!(w; all = all), a.windows)
 
 function Base.run(app::Application)
     if isnothing(app.app)
         mount!(app)
     end
-    run(app.app)
-    return 0
+    if isempty(app.windows)
+        @warn "No windows to run in application"
+    end
+    start!(app.bin)
+    return run(app.app)
+
 end
 
+
 function mount!(app::Application)::GtkApplication
-    println("mounting app")
     app.app = GtkApplication(app.id)
-    println("has $(length(app.windows)) windows")
     signal_connect(app.app, :activate) do _
         mount!.(app.windows, (app,))
     end
