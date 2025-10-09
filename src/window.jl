@@ -3,7 +3,7 @@ export Window, window, reload!, AbstractGtakWindow
 
 Base.@kwdef mutable struct Window <: AbstractGtakWindow
     app::AbstractGtakApplication
-    router::Router = Router(app.bin)
+    router::Router = Router(app.scheduler)
     title::String = "Gtak Window"
     window::Union{GtkWindow, Nothing} = nothing
     catalyst::Catalyst = Catalyst()

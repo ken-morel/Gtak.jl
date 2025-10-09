@@ -11,7 +11,7 @@ end
 
 mutable struct StaticPage <: AbstractPage
     content::Components
-    bin::Union{DirtBin, Nothing}
+    scheduler::Union{Scheduler, Nothing}
     StaticPage(c::Components) = new(c, nothing)
 end
 
@@ -23,7 +23,7 @@ mutable struct ReloadablePage <: AbstractPage
     const builder::PageBuilderFunction
     const context::PageContext
     content::Components
-    bin::Union{DirtBin, Nothing}
+    scheduler::Union{Scheduler, Nothing}
 
     ReloadablePage(
         builder::Function, context::PageContext,
@@ -33,7 +33,7 @@ mutable struct ReloadablePage <: AbstractPage
     ) = new(builder, context, builder(context), nothing)
 end
 
-setbin!(p::AbstractPage, bin::Union{DirtBin, Nothing}) = p.bin = bin
+setscheduler!(p::AbstractPage, scheduler::Union{Scheduler, Nothing}) = p.scheduler = scheduler
 
 function reload!(p::ReloadablePage)
     unmount!(p)
@@ -76,18 +76,4 @@ function IonicEfus.unmount!(p::AbstractPage)
     return unmount!.(p.content)
 end
 
-function refresh(p::AbstractPage)
-    isnothing(p.bin) && return
-    dirty = Set{GtakComponent}()
-    todo = Set{GtakComponent}(p.content)
-    while !isempty(todo)
-        comp = pop!(todo)
-        isdirty(comp) && push!(dirty, comp)
-        children = getchildren(comp)
-        if !isnothing(children)
-            push!.((todo,), children)
-        end
-    end
-    push!.((p.bin,), dirty)
-    return
-end
+

@@ -19,13 +19,7 @@ function IonicEfus.isdirty(c::GtakComponent)
     return hasproperty(c, :dirty) && !isempty(c.dirty)
 end
 
-function shaketree(c::GtakComponent)
-    page = getpage(c)
-    if !isnothing(page)
-        refresh(page)
-    end
-    return
-end
+
 
 function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[:widget])
     c.parent = nothing
@@ -70,6 +64,10 @@ end
 @inline function IonicEfus.dirty!(c::GtakComponent, attr::Symbol)
     if hasproperty(c, :dirty)
         push!(c.dirty, attr)
+        page = getpage(c)
+        if !isnothing(page) && !isnothing(page.scheduler)
+            schedule!(page.scheduler, () -> update!(c), Priority.Normal)
+        end
     end
     return
 end

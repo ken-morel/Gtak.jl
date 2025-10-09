@@ -31,7 +31,6 @@ function IonicEfus.mount!(b::Button, p::GtakComponent)
         if !isnothing(b.click)
             b.click()
         end
-        shaketree(b)
         return
     end
     _trackreactiveattributes(b)

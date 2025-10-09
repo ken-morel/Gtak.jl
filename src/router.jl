@@ -3,8 +3,8 @@ export Router
 struct Router
     history::Vector{AbstractPage}
     current_page::Reactant{Union{AbstractPage, Nothing}}
-    bin::DirtBin
-    Router(bin::DirtBin) = new([], Reactant{Union{AbstractPage, Nothing}}(nothing), bin)
+    scheduler::Scheduler
+    Router(scheduler::Scheduler) = new([], Reactant{Union{AbstractPage, Nothing}}(nothing), scheduler)
 end
 
 function Base.push!(r::Router, p::AbstractPage; replace::Bool = false)
@@ -14,7 +14,7 @@ function Base.push!(r::Router, p::AbstractPage; replace::Bool = false)
             push!(r.history, page)
         end
     end
-    setbin!(p, r.bin)
+    setscheduler!(p, r.scheduler)
     setvalue!(r.current_page, p)
     return p
 end
@@ -22,7 +22,7 @@ end
 function Base.pop!(r::Router)
     current = getvalue(r.current_page)
     if !isnothing(current)
-        setbin!(current, nothing)
+        setscheduler!(current, nothing)
     end
     page = isempty(r.history) ? nothing : pop!(r.history)
     setvalue!(r.current_page, page)

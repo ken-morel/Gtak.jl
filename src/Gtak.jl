@@ -13,7 +13,7 @@ abstract type AbstractGtakWindow <: GtakComponent end
 
 
 include("./bridge.jl")
-include("./bin.jl")
+include("./scheduler.jl")
 include("./page.jl")
 include("./router.jl")
 include("./window.jl")
