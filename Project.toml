@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["ken-morel <engonken8@gmail.com>"]
 
 [deps]
+Atak = "ea1fb407-d168-472b-9d3b-6f44c48cad5b"
 BaseDirs = "18cc8868-cbac-4acf-b575-c8ff214dc66f"
 FunctionWrappers = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
 Gtk4 = "9db2cae5-386f-4011-9d63-a5602296539b"
