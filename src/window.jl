@@ -3,7 +3,8 @@ export Window, window, reload!, AbstractGtakWindow
 
 Base.@kwdef mutable struct Window <: AbstractGtakWindow
     app::AbstractGtakApplication
-    router::Router = Router(app.scheduler)
+    scheduler::Scheduler = Scheduler()
+    router::Router = Router(scheduler)
     title::String = "Gtak Window"
     window::Union{GtkWindow, Nothing} = nothing
     catalyst::Catalyst = Catalyst()
@@ -41,6 +42,7 @@ end
 function IonicEfus.mount!(w::Window, a::AbstractGtakApplication)::GtkApplicationWindow
     w.app = a
     w.window = GtkApplicationWindow(a.app, w.title)
+    start!(w.scheduler)
     page = getvalue(w.router.current_page)
     if page isa AbstractPage
         show(w, page)
@@ -58,6 +60,7 @@ function IonicEfus.unmount!(w::Window)
     if !isnothing(w.window)
         destroy(w.window)
     end
+    stop!(w.scheduler)
     w.window = nothing
     w.app = nothing
     denature!(w.catalyst)

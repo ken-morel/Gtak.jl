@@ -4,13 +4,12 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     id::String
     windows::Vector{AbstractGtakWindow} = []
     app::Union{GtkApplication, Nothing} = nothing
-    scheduler::Scheduler = Scheduler()
 end
 
 Base.push!(app::Application, win::AbstractGtakWindow) = push!(app.windows, win)
 
-function application(init::Function, id::String; scheduler::Scheduler = Scheduler())
-    app = Application(; id, scheduler)
+function application(init::Function, id::String)
+    app = Application(; id)
     init(app)
     mount!(app)
     return app
@@ -25,9 +24,7 @@ function Base.run(app::Application)
     if isempty(app.windows)
         @warn "No windows to run in application"
     end
-    start!(app.scheduler)
     return run(app.app)
-
 end
 
 
