@@ -6,12 +6,14 @@ Base.@kwdef mutable struct DirtBin
     cleanafter::Real = 0.1
     const lock::ReentrantLock = ReentrantLock()
     const dirt::Set{GtakComponent} = Set{GtakComponent}()
+    const haspendingupdates = Threads.Condition()
     running::Bool = false
     task::Union{Task, Nothing} = nothing
 end
 
 function Base.push!(d::DirtBin, c::GtakComponent)
     @lock d.lock push!(d.dirt, c)
+    notify(d.haspendingupdates)
     return c
 end
 
@@ -38,7 +40,9 @@ function start!(b::DirtBin; force::Bool = false)
             @async begin
                 b.running = true
                 try
+                    lock(b.haspendinupdates)
                     while (@lock b.lock b.running)
+                        wait(b.haspendingupdates)
                         comp = @lock b.lock (isempty(b.dirt) ? nothing : pop!(b.dirt))
                         if comp === nothing
                             sleep(b.cleanafter)
@@ -52,6 +56,7 @@ function start!(b::DirtBin; force::Bool = false)
                         end
                     end
                 finally
+                    unlock(b.haspendingupdates)
                     @lock b.lock begin
                         if b.task == current_task()
                             b.running = false

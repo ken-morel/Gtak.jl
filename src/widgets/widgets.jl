@@ -1,6 +1,7 @@
 include("./label.jl")
 include("./button.jl")
 include("./box.jl")
+include("./entry.jl")
 
 IonicEfus.getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
 IonicEfus.getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
