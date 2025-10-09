@@ -23,8 +23,8 @@ function show(w::Window, p::AbstractPage)
     return w.window[] = mount!(p)
 end
 
-function window(init::Function, app::AbstractGtakApplication)
-    win = Window(; app)
+function window(init::Function, app::AbstractGtakApplication; args...)
+    win = Window(; app, args...)
     page = init(win)
     if page isa PageOrBuilder
         push!(win.router, page(PageContext(win)))

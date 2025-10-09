@@ -37,7 +37,8 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
     for widget in widgets
         if hasproperty(c, widget) && !isnothing(getfield(c, widget))
             widget_obj = getfield(c, widget)
-            #TODO: Destroy the widget properly
+            parent = Gtk4.parent(widget_obj)
+            delete!(parent, widget_obj)
             setproperty!(c, widget, nothing)
         end
     end

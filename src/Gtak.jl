@@ -1,5 +1,5 @@
 module Gtak
-using Efus
+using IonicEfus
 using Atak
 using FunctionWrappers: FunctionWrapper
 using Gtk4
