@@ -20,20 +20,25 @@ function show(w::Window, p::AbstractPage)
     if isnothing(w.window)
         return
     end
-    return w.window[] = mount!(p)
+    widgets = mount!(p)
+    box = GtkBox(OV)
+    push!(box, widgets...)
+    return w.window[] = box
 end
 
 function window(init::Function, app::AbstractGtakApplication; args...)
     win = Window(; app, args...)
     page = init(win)
-    if page isa PageOrBuilder
+    if page isa AbstractPage
+        push!(win.router, page)
+    elseif page isa PageBuilder
         push!(win.router, page(PageContext(win)))
     end
     push!(app, win)
     return win
 end
 
-function mount!(w::Window, a::AbstractGtakApplication)::GtkApplicationWindow
+function IonicEfus.mount!(w::Window, a::AbstractGtakApplication)::GtkApplicationWindow
     w.app = a
     w.window = GtkApplicationWindow(a.app, w.title)
     page = getvalue(w.router.current_page)
@@ -49,7 +54,7 @@ function mount!(w::Window, a::AbstractGtakApplication)::GtkApplicationWindow
     return w.window
 end
 
-function unmount!(w::Window)
+function IonicEfus.unmount!(w::Window)
     if !isnothing(w.window)
         destroy(w.window)
     end

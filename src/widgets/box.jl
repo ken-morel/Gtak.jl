@@ -5,7 +5,7 @@ Base.@kwdef mutable struct Box <: GtakComponent
     spacing::MayBeReactive{Int} = 4
     homogeneous::MayBeReactive{Bool} = false
 
-    const children::Vector{<:AbstractComponent}
+    const children::Vector{Component} = []
 
     widget::Union{GtkBox, Nothing} = nothing
     parent::Union{GtakComponent, Nothing} = nothing
@@ -14,12 +14,14 @@ Base.@kwdef mutable struct Box <: GtakComponent
     const catalyst::Catalyst = Catalyst()
 end
 
+Gtk4.GtkBox(o::Orientation) = GtkBox(o === OV ? :v : :h)
+
 @inline params(::Type{Box}) = [:orient, :spacing]
 
 HBox(; args...) = Box(; orient = Gtk4.Orientation_HORIZONTAL, args...)
 VBox(; args...) = Box(; orient = Gtk4.Orientation_VERTICAL, args...)
 
-function mount!(b::Box, p::GtakComponent)
+function IonicEfus.mount!(b::Box, p::GtakComponent)
     b.parent = p
     b.widget = GtkBox(resolve(Gtk4.Orientation, b.orient))
     push!.((b.dirty,), params(Box))
@@ -30,12 +32,12 @@ function mount!(b::Box, p::GtakComponent)
     end
     return b.widget
 end
-function unmount!(b::Box)
+function IonicEfus.unmount!(b::Box)
     _gtakunmountwidget!(b)
     return
 end
 
-function update!(b::Box)
+function IonicEfus.update!(b::Box)
     return _updates(b) do dirt
         if dirt == :spacing
             b.widget.spacing = resolve(Int, b.spacing)

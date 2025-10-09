@@ -2,8 +2,8 @@ include("./label.jl")
 include("./button.jl")
 include("./box.jl")
 
-getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
-getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
+IonicEfus.getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
+IonicEfus.getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
 
 function getpage(c::GtakComponent)
     current = c
@@ -14,7 +14,7 @@ function getpage(c::GtakComponent)
         current
     end
 end
-function isdirty(c::GtakComponent)
+function IonicEfus.isdirty(c::GtakComponent)
     return hasproperty(c, :dirty) && !isempty(c.dirty)
 end
 
@@ -66,13 +66,13 @@ function _updates(fn::Function, c::GtakComponent)
     return
 end
 
-@inline function dirty!(c::GtakComponent, attr::Symbol)
+@inline function IonicEfus.dirty!(c::GtakComponent, attr::Symbol)
     if hasproperty(c, :dirty)
         push!(c.dirty, attr)
     end
     return
 end
-@inline function dirty!(c::GtakComponent, attr::Symbol, value)
+@inline function IonicEfus.dirty!(c::GtakComponent, attr::Symbol, value)
     if hasproperty(c, attr)
         setfield!(c, attr, value)
         dirty!(c, attr)

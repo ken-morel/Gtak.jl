@@ -31,7 +31,7 @@ function Base.run(app::Application)
 end
 
 
-function mount!(app::Application)::GtkApplication
+function IonicEfus.mount!(app::Application)::GtkApplication
     app.app = GtkApplication(app.id)
     signal_connect(app.app, :activate) do _
         mount!.(app.windows, (app,))
@@ -39,7 +39,7 @@ function mount!(app::Application)::GtkApplication
     return app.app
 end
 
-function unmount!(app::Application)
+function IonicEfus.unmount!(app::Application)
     unmount!.(app.windows)
     if !isnothing(app.app)
         destroy(app.app)
@@ -47,7 +47,7 @@ function unmount!(app::Application)
     return
 end
 
-function remount!(app::Application)
+function IonicEfus.remount!(app::Application)
     unmount!(app)
     return mount!(app)
 end

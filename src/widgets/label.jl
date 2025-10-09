@@ -7,14 +7,14 @@ Base.@kwdef mutable struct Label <: GtakComponent
     wrap::MayBeReactive{Bool} = true
 
     widget::Union{GtkLabel, Nothing} = nothing
-    parent::Union{GtakComponent, Nothing} = nothing
+    parent::Union{Component, Nothing} = nothing
     dirty::Set{Symbol} = Set()
 
     const catalyst::Catalyst = Catalyst()
 end
 
 
-function mount!(l::Label, p::GtakComponent)::GtkLabel
+function IonicEfus.mount!(l::Label, p::GtakComponent)::GtkLabel
     l.parent = p
     l.widget = GtkLabel(resolve(AbstractString, l.text))
     Gtk4.markup(l.widget, resolve(AbstractString, l.text))
@@ -27,7 +27,7 @@ function mount!(l::Label, p::GtakComponent)::GtkLabel
 end
 
 params(::Type{Label}) = [:text, :selectable, :justify, :wrap]
-function update!(l::Label)
+function IonicEfus.update!(l::Label)
     _updates(l) do dirt
         if dirt == :text
             Gtk4.markup(l.widget, resolve(String, l.text))
@@ -42,7 +42,7 @@ function update!(l::Label)
     return
 end
 
-function unmount!(l::Label)
+function IonicEfus.unmount!(l::Label)
     _gtakunmountwidget!(l)
     return
 end

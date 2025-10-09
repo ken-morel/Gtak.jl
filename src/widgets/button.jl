@@ -7,7 +7,7 @@ Base.@kwdef mutable struct Button <: GtakComponent
     widget::Union{GtkButton, Nothing} = nothing
     label::Union{GtkLabel, Nothing} = nothing
     parent::Union{GtakComponent, Nothing} = nothing
-    children::Vector{AbstractComponent} = []
+    children::Vector{Component} = []
 
     dirty::Set{Symbol} = Set()
 
@@ -15,7 +15,7 @@ Base.@kwdef mutable struct Button <: GtakComponent
 end
 
 
-function mount!(b::Button, p::GtakComponent)
+function IonicEfus.mount!(b::Button, p::GtakComponent)
     b.parent = p
     b.widget = GtkButton()
     if isempty(b.children)
@@ -40,7 +40,7 @@ end
 
 params(::Type{Button}) = [:text, :click]
 
-function update!(c::Button)
+function IonicEfus.update!(c::Button)
     return _updates(c) do dirt
         if dirt == :text
             if !isnothing(c.label)
@@ -50,7 +50,7 @@ function update!(c::Button)
     end
 end
 
-function unmount!(b::Button)
+function IonicEfus.unmount!(b::Button)
     _gtakunmountwidget!(b; widgets = [:label, :widget])
     return
 end

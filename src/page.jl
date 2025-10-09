@@ -10,19 +10,19 @@ end
 
 
 mutable struct StaticPage <: AbstractPage
-    component::GtakComponent
+    content::Components
     bin::Union{DirtBin, Nothing}
-    StaticPage(c::GtakComponent) = new(c, nothing)
+    StaticPage(c::Components) = new(c, nothing)
 end
 
 reload!(s::StaticPage) = s
 
-const PageBuilderFunction = FunctionWrapper{GtakComponent, Tuple{PageContext}}
+const PageBuilderFunction = FunctionWrapper{Components, Tuple{PageContext}}
 
 mutable struct ReloadablePage <: AbstractPage
     const builder::PageBuilderFunction
     const context::PageContext
-    component::GtakComponent
+    content::Components
     bin::Union{DirtBin, Nothing}
 
     ReloadablePage(
@@ -37,7 +37,7 @@ setbin!(p::AbstractPage, bin::Union{DirtBin, Nothing}) = p.bin = bin
 
 function reload!(p::ReloadablePage)
     unmount!(p)
-    p.component = p.builder(p.context)
+    p.content = p.builder(p.context)
     return p
 end
 
@@ -64,22 +64,22 @@ end
 
 const PageOrBuilder = Union{AbstractPage, PageBuilder}
 
-function mount!(p::AbstractPage; bin::Union{DirtBin, Nothing} = nothing)
-    return mount!(p.component, p)
+function IonicEfus.mount!(p::AbstractPage; bin::Union{DirtBin, Nothing} = nothing)
+    return mount!.(p.content, (p,))
 end
 
-function remount!(p::AbstractPage)
-    return remount!(p.component, p)
+function IonicEfus.remount!(p::AbstractPage)
+    return remount!.(p.content, (p,))
 end
 
-function unmount!(p::AbstractPage)
-    return unmount!(p.component)
+function IonicEfus.unmount!(p::AbstractPage)
+    return unmount!.(p.content)
 end
 
 function refresh(p::AbstractPage)
     isnothing(p.bin) && return
     dirty = Set{GtakComponent}()
-    todo = Set{GtakComponent}([p.component])
+    todo = Set{GtakComponent}(p.content)
     while !isempty(todo)
         comp = pop!(todo)
         isdirty(comp) && push!(dirty, comp)
