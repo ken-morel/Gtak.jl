@@ -1,27 +1,26 @@
+abstract type GtakWidgetComponent <: GtakComponent end
+
 include("./label.jl")
 include("./button.jl")
 include("./box.jl")
 include("./entry.jl")
 
-IonicEfus.getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
-IonicEfus.getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
 
-function getpage(c::GtakComponent)
+IonicEfus.getparent(p::GtakWidgetComponent) = hasproperty(p, :parent) ? p.parent : nothing
+IonicEfus.getchildren(p::GtakWidgetComponent) = hasproperty(p, :children) ? p.children : nothing
+
+function getpage(c::GtakWidgetComponent)
     current = c
-    while (parent = getparent(current)) !== nothing && parent !== current && !isa(current, AbstractPage)
+    while !isa(current, AbstractPage) && (parent = getparent(current)) !== nothing && parent !== current
         current = parent
+        current isa AbstractPage && return current
     end
-    return if current isa AbstractPage
-        current
-    end
-end
-function IonicEfus.isdirty(c::GtakComponent)
-    return hasproperty(c, :dirty) && !isempty(c.dirty)
+    return
 end
 
+IonicEfus.isdirty(c::GtakWidgetComponent) = hasproperty(c, :dirty) && !isempty(c.dirty)
 
-
-function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[:widget])
+function _gtakunmountwidget!(c::GtakWidgetComponent; widgets::Vector{Symbol} = Symbol[:widget])
     c.parent = nothing
     denature!(c.catalyst)
     children = getchildren(c)
@@ -40,7 +39,7 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
     return
 end
 
-@inline function _trackreactiveattributes(c::GtakComponent)
+function _trackreactiveattributes(c::GtakWidgetComponent)
     for attr in params(typeof(c))
         val = getfield(c, attr)
         if val isa AbstractReactive
@@ -52,7 +51,7 @@ end
     end
     return
 end
-function _updates(fn::Function, c::GtakComponent)
+function _updates(fn::Function, c::GtakWidgetComponent)
     !ismounted(c) && return
     while !isempty(c.dirty)
         key = pop!(c.dirty)
@@ -61,22 +60,32 @@ function _updates(fn::Function, c::GtakComponent)
     return
 end
 
-@inline function IonicEfus.dirty!(c::GtakComponent, attr::Symbol)
+function scheduleupdate(c::GtakWidgetComponent, priority::Atak.Priority = Atak.Normal)
+    page = getpage(c)
+    return if !isnothing(page) && !isnothing(page.scheduler)
+        schedule!(page.scheduler, () -> IonicEfus.update!(c), priority)
+    end
+end
+
+function IonicEfus.dirty!(c::GtakWidgetComponent, attr::Symbol, priority::Union{Atak.Priority, Nothing} = Atak.Normal)
     if hasproperty(c, :dirty)
         push!(c.dirty, attr)
-        page = getpage(c)
-        if !isnothing(page) && !isnothing(page.scheduler)
-            schedule!(page.scheduler, () -> update!(c), Priority.Normal)
-        end
+        !isnothing(priority) &&scheduleupdate(c, priority)
     end
     return
 end
-@inline function IonicEfus.dirty!(c::GtakComponent, attr::Symbol, value)
+function IonicEfus.dirty!(c::GtakWidgetComponent, attr::Symbol, value, priority::Union{Atak.Priority, Nothing} = Atak.Normal)
     if hasproperty(c, attr)
         setfield!(c, attr, value)
-        dirty!(c, attr)
+        dirty!(c, attr, priority)
     end
     return
 end
 
-ismounted(c::GtakComponent) = !isnothing(c.widget)
+ismounted(c::GtakWidgetComponent) = !isnothing(c.widget)
+
+function Base.schedule(fn::Function, c::GtakWidgetComponent, priority::Atak.Priority)
+    p = getpage(c)
+    isnothing(p) && return
+    return schedule(fn, p, priority)
+end

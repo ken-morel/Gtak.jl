@@ -1,6 +1,6 @@
 export Box, HBox, VBox
 
-Base.@kwdef mutable struct Box <: GtakComponent
+Base.@kwdef mutable struct Box <: GtakWidgetComponent
     orient::Gtk4.Orientation = Gtk4.Orientation_VERTICAL
     spacing::MayBeReactive{Int} = 4
     homogeneous::MayBeReactive{Bool} = false
@@ -16,7 +16,7 @@ end
 
 Gtk4.GtkBox(o::Orientation) = GtkBox(o === OV ? :v : :h)
 
-@inline params(::Type{Box}) = [:orient, :spacing]
+params(::Type{Box}) = [:orient, :spacing]
 
 HBox(; args...) = Box(; orient = Gtk4.Orientation_HORIZONTAL, args...)
 VBox(; args...) = Box(; orient = Gtk4.Orientation_VERTICAL, args...)
@@ -25,7 +25,7 @@ function IonicEfus.mount!(b::Box, p::GtakComponent)
     b.parent = p
     b.widget = GtkBox(resolve(Gtk4.Orientation, b.orient))
     push!.((b.dirty,), params(Box))
-    update!(b)
+    IonicEfus.update!(b)
     for child in b.children
         widget = mount!(child, b)
         push!(b.widget, widget)

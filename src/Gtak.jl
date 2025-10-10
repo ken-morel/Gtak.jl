@@ -4,16 +4,18 @@ using Reexport
 @reexport using IonicEfus
 
 using FunctionWrappers: FunctionWrapper
-using Gtk4
+@reexport using Gtk4
+@reexport using Atak
+
+export GtakComponent, AbstractGtakApplication, AbstractGtakWindow
 
 
-abstract type AbstractGtakApplication end
+abstract type AbstractGtakApplication <: Atak.Application end
 abstract type GtakComponent <: IonicEfus.Component end
 abstract type AbstractGtakWindow <: GtakComponent end
 
 
 include("./bridge.jl")
-include("./scheduler.jl")
 include("./page.jl")
 include("./router.jl")
 include("./window.jl")

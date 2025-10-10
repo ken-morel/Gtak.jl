@@ -1,6 +1,6 @@
 export Entry
 
-Base.@kwdef mutable struct Entry <: GtakComponent
+Base.@kwdef mutable struct Entry <: GtakWidgetComponent
     text::MayBeReactive{String} = ""
     placeholder::String = ""
     onchange::Union{Function, Nothing} = nothing
@@ -23,16 +23,20 @@ function IonicEfus.mount!(e::Entry, p::GtakComponent)
 
     if e.text isa AbstractReactive
         catalyze!(e.catalyst, e.text) do _
-            dirty!(e, :text)
+            dirty!(e, :text, Atak.UserInteractive)
         end
     end
     signal_connect(e.widget, "changed") do _
         current_text = e.widget.text
         if e.text isa AbstractReactive && getvalue(e.text) != current_text
-            setvalue!(e.text, current_text)
+            schedule(e, Priority.UserInteractive) do
+                setvalue!(e.text, current_text)
+            end
         end
         if !isnothing(e.onchange)
-            e.onchange(current_text)
+            schedule(e, Atak.Normal) do
+                e.onchange(current_text)
+            end
         end
     end
 

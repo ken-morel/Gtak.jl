@@ -1,6 +1,6 @@
 export Label
 
-Base.@kwdef mutable struct Label <: GtakComponent
+Base.@kwdef mutable struct Label <: GtakWidgetComponent
     text::MayBeReactive{String} = ""
     selectable::MayBeReactive{Bool} = false
     justify::MayBeReactive{Gtk4.Justification} = JL

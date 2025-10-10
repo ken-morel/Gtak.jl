@@ -6,11 +6,17 @@ using .Gtak
 boxes = ["ama", "bana", "banana"]
 
 application("cm.github.this") do app::Application
-    window(app) do win
-        staticpage"""
-        for box in boxes
-          Button text=box
+    window(app) do _
+        hello = Reactant("Hello world")
+        onmount!(
+            staticpage"""
+            Label text=hello
+            for box in boxes
+              Button text=box onclick =(() -> hello' = hello' * " " * box)
+            end
+            """
+        ) do _
+            println("ot page")
         end
-        """
     end
 end |> run
