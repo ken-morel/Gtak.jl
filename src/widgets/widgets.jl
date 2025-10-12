@@ -1,52 +1,52 @@
+export GtakComponent, scheduleupdate, getpage
+abstract type GtakWidgetComponent <: GtakComponent end
+
 include("./label.jl")
 include("./button.jl")
 include("./box.jl")
 include("./entry.jl")
+include("./spinner.jl")
+include("./separator.jl")
+include("./grid.jl")
+include("./frame.jl")
+
 
 IonicEfus.getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
 IonicEfus.getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
 
 function getpage(c::GtakComponent)
     current = c
-    while (parent = getparent(current)) !== nothing && parent !== current && !isa(current, AbstractPage)
+    while !isa(current, AbstractPage) && (parent = getparent(current)) !== nothing && parent !== current
         current = parent
-    end
-    return if current isa AbstractPage
-        current
-    end
-end
-function IonicEfus.isdirty(c::GtakComponent)
-    return hasproperty(c, :dirty) && !isempty(c.dirty)
-end
-
-function shaketree(c::GtakComponent)
-    page = getpage(c)
-    if !isnothing(page)
-        refresh(page)
+        current isa AbstractPage && return current
     end
     return
 end
 
-function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[:widget])
-    c.parent = nothing
-    denature!(c.catalyst)
-    children = getchildren(c)
-    if !isnothing(children)
-        foreach(unmount!, c.children)
-    end
+IonicEfus.isdirty(c::GtakComponent) = hasproperty(c, :dirty) && !isempty(c.dirty)
 
-    for widget in widgets
-        if hasproperty(c, widget) && !isnothing(getfield(c, widget))
-            widget_obj = getfield(c, widget)
-            parent = Gtk4.parent(widget_obj)
-            delete!(parent, widget_obj)
-            setproperty!(c, widget, nothing)
+function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[:widget])
+    @lock c.lock begin
+        c.parent = nothing
+        denature!(c.catalyst)
+        children = getchildren(c)
+        if !isnothing(children)
+            foreach(unmount!, c.children)
+        end
+
+        for widget in widgets
+            if hasproperty(c, widget) && !isnothing(getfield(c, widget))
+                widget_obj = getfield(c, widget)
+                parent = Gtk4.parent(widget_obj)
+                !isnothing(parent) && delete!(parent, widget_obj)
+                setproperty!(c, widget, nothing)
+            end
         end
     end
     return
 end
 
-@inline function _trackreactiveattributes(c::GtakComponent)
+function _trackreactiveattributes(c::GtakComponent)
     for attr in params(typeof(c))
         val = getfield(c, attr)
         if val isa AbstractReactive
@@ -58,27 +58,48 @@ end
     end
     return
 end
-function _updates(fn::Function, c::GtakComponent)
+function _updates(fn::Function, c::Component)
     !ismounted(c) && return
-    while !isempty(c.dirty)
+    @lock c.lock while !isempty(c.dirty)
         key = pop!(c.dirty)
         fn(key)
     end
     return
 end
+function scheduleupdate(c::GtakComponent, priority::Sched.Priority = Sched.Normal)
+    page = getpage(c)
+    return if !isnothing(page) && !isnothing(page.scheduler)
 
-@inline function IonicEfus.dirty!(c::GtakComponent, attr::Symbol)
-    if hasproperty(c, :dirty)
+        schedule!(page.scheduler, Sched.ComponentUpdate(c, priority))
+    end
+end
+
+function IonicEfus.dirty!(c::GtakComponent, attr::Symbol, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
+    @lock c.lock if hasproperty(c, :dirty)
         push!(c.dirty, attr)
+        !isnothing(priority) && scheduleupdate(c, priority)
     end
     return
 end
-@inline function IonicEfus.dirty!(c::GtakComponent, attr::Symbol, value)
-    if hasproperty(c, attr)
+function IonicEfus.dirty!(c::GtakComponent, attr::Symbol, value, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
+    @lock c.lock if hasproperty(c, attr)
         setfield!(c, attr, value)
-        dirty!(c, attr)
+        dirty!(c, attr, priority)
     end
     return
 end
 
 ismounted(c::GtakComponent) = !isnothing(c.widget)
+
+function Base.schedule(c::GtakComponent, task::Sched.AbstractPriorityTask)
+    p = getpage(c)
+    isnothing(p) && return
+    return schedule(p, task)
+end
+function getcomponentlayout(c::Component)
+    return if hasproperty(c, :lay) && c.lay isa SubParams
+        c.lay
+    else
+        SubParams()
+    end
+end

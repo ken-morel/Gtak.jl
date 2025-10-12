@@ -1,17 +1,12 @@
 export Button
 
-Base.@kwdef mutable struct Button <: GtakComponent
+@gtakcomponent Button <: GtakWidgetComponent begin
     text::MayBeReactive{String} = ""
-    click::Union{Function, Nothing} = nothing
+    onclick::Union{Function, Nothing} = nothing
 
-    widget::Union{GtkButton, Nothing} = nothing
     label::Union{GtkLabel, Nothing} = nothing
-    parent::Union{GtakComponent, Nothing} = nothing
+
     children::Vector{Component} = []
-
-    dirty::Set{Symbol} = Set()
-
-    const catalyst::Catalyst = Catalyst()
 end
 
 
@@ -28,17 +23,20 @@ function IonicEfus.mount!(b::Button, p::GtakComponent)
         end
     end
     signal_connect(b.widget, :clicked) do _
-        if !isnothing(b.click)
-            b.click()
+        if !isnothing(b.onclick)
+            schedule(
+                b, Sched.CallbackCall(b.onclick, Sched.UserInteractive) do
+                    b.onclick()
+                end
+            )
         end
-        shaketree(b)
         return
     end
     _trackreactiveattributes(b)
     return b.widget
 end
 
-params(::Type{Button}) = [:text, :click]
+IonicEfus.params(::Type{Button}) = Set{Symbol}([:text, :onclick])
 
 function IonicEfus.update!(c::Button)
     return _updates(c) do dirt

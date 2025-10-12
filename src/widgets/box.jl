@@ -1,22 +1,17 @@
 export Box, HBox, VBox
 
-Base.@kwdef mutable struct Box <: GtakComponent
+@gtakcomponent Box <: GtakWidgetComponent begin
     orient::Gtk4.Orientation = Gtk4.Orientation_VERTICAL
     spacing::MayBeReactive{Int} = 4
     homogeneous::MayBeReactive{Bool} = false
+    expand::Symbol = :none
 
     const children::Vector{Component} = []
-
-    widget::Union{GtkBox, Nothing} = nothing
-    parent::Union{GtakComponent, Nothing} = nothing
-    dirty::Set{Symbol} = Set()
-
-    const catalyst::Catalyst = Catalyst()
 end
 
 Gtk4.GtkBox(o::Orientation) = GtkBox(o === OV ? :v : :h)
 
-@inline params(::Type{Box}) = [:orient, :spacing]
+IonicEfus.params(::Type{Box}) = Set{Symbol}([:orient, :spacing, :homogeneous, :expand])
 
 HBox(; args...) = Box(; orient = Gtk4.Orientation_HORIZONTAL, args...)
 VBox(; args...) = Box(; orient = Gtk4.Orientation_VERTICAL, args...)
@@ -25,7 +20,8 @@ function IonicEfus.mount!(b::Box, p::GtakComponent)
     b.parent = p
     b.widget = GtkBox(resolve(Gtk4.Orientation, b.orient))
     push!.((b.dirty,), params(Box))
-    update!(b)
+    IonicEfus.update!(b)
+    setexpand!(b.widget, b.expand)
     for child in b.children
         widget = mount!(child, b)
         push!(b.widget, widget)
@@ -43,6 +39,13 @@ function IonicEfus.update!(b::Box)
             b.widget.spacing = resolve(Int, b.spacing)
         elseif dirt == :homogeneous
             b.widget.homogeneous = resolve(Bool, b.homogeneous)
+        elseif dirt == :expand
+            setexpand!(b.widget, b.expand)
         end
     end
+end
+function setexpand!(b::GtkBox, v::Symbol)
+    b.vexpand = v == :both || v == :h
+    b.hexpand = v == :both || v == :v
+    return
 end

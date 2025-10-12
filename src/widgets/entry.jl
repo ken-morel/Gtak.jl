@@ -1,18 +1,14 @@
 export Entry
 
-Base.@kwdef mutable struct Entry <: GtakComponent
+@gtakcomponent Entry <: GtakWidgetComponent begin
     text::MayBeReactive{String} = ""
     placeholder::String = ""
     onchange::Union{Function, Nothing} = nothing
 
-    widget::Union{GtkEntry, Nothing} = nothing
-    parent::Union{GtakComponent, Nothing} = nothing
-    dirty::Set{Symbol} = Set()
-
-    const catalyst::Catalyst = Catalyst()
+    const textlock = Base.ReentrantLock()
 end
 
-params(::Type{Entry}) = [:text, :placeholder, :onchange]
+IonicEfus.params(::Type{Entry}) = Set{Symbol}([:text, :placeholder, :onchange])
 
 function IonicEfus.mount!(e::Entry, p::GtakComponent)
     e.parent = p
@@ -22,20 +18,36 @@ function IonicEfus.mount!(e::Entry, p::GtakComponent)
     e.widget.placeholder_text = resolve(String, e.placeholder)
 
     if e.text isa AbstractReactive
-        catalyze!(e.catalyst, e.text) do _
-            dirty!(e, :text)
+        catalyze!(e.catalyst, e.text) do r
+            trylock(e.textlock) && try
+                val = getvalue(r)
+                if e.widget.text != val
+                    e.widget.text = val
+                end
+            finally
+                unlock(e.textlock)
+            end
         end
     end
     signal_connect(e.widget, "changed") do _
-        current_text = e.widget.text
-        if e.text isa AbstractReactive && getvalue(e.text) != current_text
-            setvalue!(e.text, current_text)
-        end
-        if !isnothing(e.onchange)
-            e.onchange(current_text)
+        trylock(e.textlock) && try
+            current_text = e.widget.text
+            if e.text isa AbstractReactive
+                if getvalue(e.text) != current_text
+                    setvalue!(e.text, current_text)
+                end
+            end
+            if !isnothing(e.onchange)
+                schedule(
+                    e, Sched.CallbackCall(e.onchange, Sched.Normal) do
+                        e.onchange(current_text)
+                    end
+                )
+            end
+        finally
+            unlock(e.textlock)
         end
     end
-
 
     _trackreactiveattributes(e)
     return e.widget
@@ -44,9 +56,13 @@ end
 function IonicEfus.update!(e::Entry)
     return _updates(e) do dirt
         if dirt == :text
-            new_text = resolve(String, e.text)
-            if e.widget.text != new_text
-                e.widget.text = new_text
+            trylock(e.textlock) && try
+                new_text = resolve(String, e.text)
+                if e.widget.text != new_text
+                    e.widget.text = new_text
+                end
+            finally
+                unlock(e.textlock)
             end
         elseif dirt == :placeholder
             e.widget.placeholder_text = e.placeholder
