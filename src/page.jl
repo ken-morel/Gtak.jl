@@ -1,5 +1,5 @@
 export AbstractPage, PageContext, PageBuilder, PageOrBuilder, StaticPage, ReloadablePage
-export onmount!, onunmount!, schedule!
+export onmount!, onunmount!
 
 
 """
@@ -178,14 +178,14 @@ function IonicEfus.unmount!(p::AbstractPage)
 end
 
 """
-    Base.schedule(fn::Function, p::AbstractPage, pr::Atak.Priority = Atak.Normal)
+    Base.schedule(fn::Function, p::AbstractPage, pr::Atak.Sched.Priority = Atak.Normal)
 
 Schedule the specified function at the priority
 on the pages scheduler.
 """
 Base.schedule(
-    fn::Function, p::AbstractPage, pr::Atak.Priority = Atak.Normal,
-) = isnothing(getscheduler(p)) ? nothing : schedule!(getscheduler(p), fn, pr)
+    p::AbstractPage, task::Sched.AbstractPriorityTask
+) = isnothing(getscheduler(p)) ? nothing : schedule!(getscheduler(p), task)
 
 """
     getscheduler(p::AbstractPage)

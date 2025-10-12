@@ -89,8 +89,8 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
         show(w, page)
     end
     catalyze!(w.catalyst, w.router.current_page) do r
-        schedule!(w.sheduler, Atak.High) do
-            if r isa AbstractPage
+        if r isa AbstractPage
+            schedule!(w.sheduler, Sched.High) do
                 show(w, getvalue(r))
             end
         end

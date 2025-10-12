@@ -1,16 +1,10 @@
 export Label
 
-Base.@kwdef mutable struct Label <: GtakWidgetComponent
+@gtakcomponent Label <: GtakWidgetComponent begin
     text::MayBeReactive{String} = ""
     selectable::MayBeReactive{Bool} = false
     justify::MayBeReactive{Gtk4.Justification} = JL
     wrap::MayBeReactive{Bool} = true
-
-    widget::Union{GtkLabel, Nothing} = nothing
-    parent::Union{Component, Nothing} = nothing
-    dirty::Set{Symbol} = Set()
-
-    const catalyst::Catalyst = Catalyst()
 end
 
 
@@ -26,7 +20,7 @@ function IonicEfus.mount!(l::Label, p::GtakComponent)::GtkLabel
     return l.widget
 end
 
-params(::Type{Label}) = [:text, :selectable, :justify, :wrap]
+IonicEfus.params(::Type{Label}) = Set{Symbol}([:text, :selectable, :justify, :wrap])
 function IonicEfus.update!(l::Label)
     _updates(l) do dirt
         if dirt == :text

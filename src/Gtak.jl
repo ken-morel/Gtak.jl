@@ -2,10 +2,12 @@ module Gtak
 using Reexport
 
 @reexport using IonicEfus
-
-using FunctionWrappers: FunctionWrapper
 @reexport using Gtk4
 @reexport using Atak
+
+using FunctionWrappers: FunctionWrapper
+
+using Atak.Sched
 
 export GtakComponent, AbstractGtakApplication, AbstractGtakWindow
 
@@ -29,5 +31,7 @@ include("./component.jl")
 include("./widgets/widgets.jl")
 
 include("./macros.jl")
+
+include("./components/component.jl")
 
 end # module Gtak

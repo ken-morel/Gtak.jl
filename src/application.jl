@@ -92,3 +92,21 @@ function IonicEfus.remount!(app::Application)
     unmount!(app)
     return mount!(app)
 end
+
+"""
+    spa(fn::Function, id::String = "com.gtak.test")
+
+Run a single page application.
+
+- `fn`: A function receiving the app and window((app, win))
+  and which may return a page or pagebuilder.
+"""
+function spa(fn::Function, id::String = "com.gtak.test")
+    return application(id) do app
+        window(app) do win
+            fn(app, win)
+        end
+    end
+end
+
+public spa
