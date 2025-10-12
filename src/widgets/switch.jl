@@ -1,0 +1,63 @@
+export Switch
+
+@gtakcomponent Switch <: GtakWidgetComponent begin
+    value::MayBeReactive{Bool} = false
+    ontoggle::Union{Function, Nothing} = nothing
+
+    const children::Components = []
+    const valuelock = ReentrantLock()
+end
+
+IonicEfus.params(::Type{Switch}) = Set{Symbol}([:value, :ontoggle])
+
+function IonicEfus.mount!(c::Switch, p::GtakComponent)
+    c.parent = p
+    c.widget = GtkSwitch()
+    c.widget.active = resolve(c.value)
+    if !isempty(c.children)
+        c.widget[] = mount!(c.children[1])
+    end
+    signal_connect(c.widget, "toggled") do _
+        if !isnothing(c.ontoggle)
+            schedule(
+                c, Sched.CallbackCall(c.ontoggle, Sched.UserInteractive) do
+                    c.ontoggle(c.widget.active)
+                end
+            )
+        end
+        if c.value isa AbstractReactive
+            schedule(
+                c, Sched.ReactantUpdate(c.value, Sched.UserInteractive) do
+                    trylock(c.valuelock) && try
+                        @ionic c.value' = c.widget.active
+                    finally
+                        unlock(c.valuelock)
+                    end
+                end
+            )
+        end
+    end
+    if c.value isa AbstractReactive
+        catalyze!(c.catalyst, c.value) do _
+            dirty!(c, :value)
+        end
+    end
+    return c.widget
+end
+function IonicEfus.update!(c::Switch)
+    return _updates(c) do key
+        if key == :value
+            trylock(c.valuelock) && try
+                c.widget.active = resolve(c.value)
+            finally
+                unlock(c.valuelock)
+            end
+        end
+    end
+end
+function IonicEfus.unmount!(c::Switch)
+    if c.widget !== nothing  && c._signal_id != 0
+        signal_handler_disconnect(c.widget, c._signal_id)
+    end
+    return _gtakunmountwidget!(c)
+end

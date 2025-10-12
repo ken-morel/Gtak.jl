@@ -1,7 +1,7 @@
 export SwitchBox
 
 const _SBCacheRow = Tuple{Any, Components, Vector{<:GtkWidget}}
-Base.@kwdef mutable struct SwitchBox <: GtakComponent
+@gtakcomponent SwitchBox <: GtakComponent begin
     value::AbstractReactive
     builder::Function
     rebuild::Bool = false
@@ -9,14 +9,9 @@ Base.@kwdef mutable struct SwitchBox <: GtakComponent
     const box::SubParams = SubParams()
 
     const innerbox = Box(; box...)
-    widget::Union{GtkBox, Nothing} = nothing
     const _cache = Set{_SBCacheRow}()
-    parent::Union{GtakComponent, Nothing} = nothing
-    const dirty = Set{Symbol}()
-
-    const lock = ReentrantLock()
-    const catalyst = Catalyst()
 end
+IonicEfus.params(::Type{SwitchBox}) = Set{Symbol}([:value, :builder, :rebuild, :remount, :box])
 
 function IonicEfus.mount!(sb::SwitchBox, p::GtakComponent)
     sb.parent = p

@@ -9,6 +9,10 @@ include("./spinner.jl")
 include("./separator.jl")
 include("./grid.jl")
 include("./frame.jl")
+include("./togglebutton.jl")
+include("./checkbutton.jl")
+include("./switch.jl")
+include("./linkbutton.jl")
 
 
 IonicEfus.getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing

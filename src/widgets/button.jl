@@ -3,6 +3,7 @@ export Button
 @gtakcomponent Button <: GtakWidgetComponent begin
     text::MayBeReactive{String} = ""
     onclick::Union{Function, Nothing} = nothing
+    const actionname::Union{String, Nothing} = nothing
 
     label::Union{GtkLabel, Nothing} = nothing
 
@@ -13,6 +14,9 @@ end
 function IonicEfus.mount!(b::Button, p::GtakComponent)
     b.parent = p
     b.widget = GtkButton()
+    if !isnothing(b.actionname)
+        b.widget.action_name = b.actionname
+    end
     if isempty(b.children)
         b.widget[] = b.label = GtkLabel(b.text)
 

@@ -1,18 +1,14 @@
 export KeyBox
 
-Base.@kwdef mutable struct KeyBox <: GtakComponent
+@gtakcomponent KeyBox <: GtakComponent begin
     deps::Vector{<:AbstractReactive}
     builder::Function
     const box = SubParams()
 
     const innerbox::Box = Box(; box...)
-    widget::Union{GtkBox, Nothing} = nothing
-    parent::Union{GtakComponent, Nothing} = nothing
-
-    const lock = ReentrantLock()
-    const dirty = Set{Symbol}()
-    const catalyst = Catalyst()
 end
+
+IonicEfus.params(::Type{KeyBox}) = Set{Symbol}([:deps, :builder, :box])
 
 function IonicEfus.mount!(r::KeyBox, p::GtakComponent)
     r.widget = mount!(r.innerbox, r)
