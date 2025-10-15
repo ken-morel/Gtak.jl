@@ -1,27 +1,25 @@
 export Label
 
-@gtakcomponent Label <: GtakWidgetComponent begin
+@gtakwidgetcomponent Label <: GtakWidgetComponent begin
     text::MayBeReactive{String} = ""
     selectable::MayBeReactive{Bool} = false
-    justify::MayBeReactive{Gtk4.Justification} = JL
+    justify::MayBeReactive{Gtk4.Justification} = J_L
     wrap::MayBeReactive{Bool} = true
 end
 
 
-function IonicEfus.mount!(l::Label, p::GtakComponent)::GtkLabel
+function mount!(l::Label, p::GtakComponent)::GtkLabel
     l.parent = p
     l.widget = GtkLabel(resolve(AbstractString, l.text))
-    Gtk4.markup(l.widget, resolve(AbstractString, l.text))
-    Gtk4.selectable(l.widget, l.selectable)
-    Gtk4.justify(l.widget, l.justify)
-    Gtk4.wrap(l.widget, l.wrap)
+    push!(l.dirty, :text, :selectable, :justify, :wrap)
+    update!(l)
 
     _trackreactiveattributes(l)
     return l.widget
 end
 
-IonicEfus.params(::Type{Label}) = Set{Symbol}([:text, :selectable, :justify, :wrap])
-function IonicEfus.update!(l::Label)
+params(::Type{Label}) = Set{Symbol}([:text, :selectable, :justify, :wrap])
+function update!(l::Label)
     _updates(l) do dirt
         if dirt == :text
             Gtk4.markup(l.widget, resolve(String, l.text))
@@ -33,10 +31,5 @@ function IonicEfus.update!(l::Label)
             Gtk4.wrap(l.widget, l.wrap)
         end
     end
-    return
-end
-
-function IonicEfus.unmount!(l::Label)
-    _gtakunmountwidget!(l)
     return
 end

@@ -1,16 +1,18 @@
 export Entry
 
-@gtakcomponent Entry <: GtakWidgetComponent begin
+@gtakwidgetcomponent Entry <: GtakWidgetComponent begin
     text::MayBeReactive{String} = ""
     placeholder::String = ""
     onchange::Union{Function, Nothing} = nothing
 
+    _changed_handler_id::UInt = 0
+
     const textlock = Base.ReentrantLock()
 end
 
-IonicEfus.params(::Type{Entry}) = Set{Symbol}([:text, :placeholder, :onchange])
+params(::Type{Entry}) = Set{Symbol}([:text, :placeholder, :onchange])
 
-function IonicEfus.mount!(e::Entry, p::GtakComponent)
+function mount!(e::Entry, p::GtakComponent)
     e.parent = p
     e.widget = GtkEntry()
 
@@ -29,7 +31,7 @@ function IonicEfus.mount!(e::Entry, p::GtakComponent)
             end
         end
     end
-    signal_connect(e.widget, "changed") do _
+    e._changed_handler_id = signal_connect(e.widget, "changed") do _
         trylock(e.textlock) && try
             current_text = e.widget.text
             if e.text isa AbstractReactive
@@ -40,7 +42,7 @@ function IonicEfus.mount!(e::Entry, p::GtakComponent)
             if !isnothing(e.onchange)
                 schedule(
                     e, Sched.CallbackCall(e.onchange, Sched.Normal) do
-                        e.onchange(current_text)
+                        @invokelatest e.onchange(current_text)
                     end
                 )
             end
@@ -53,7 +55,7 @@ function IonicEfus.mount!(e::Entry, p::GtakComponent)
     return e.widget
 end
 
-function IonicEfus.update!(e::Entry)
+function update!(e::Entry)
     return _updates(e) do dirt
         if dirt == :text
             trylock(e.textlock) && try
@@ -70,7 +72,11 @@ function IonicEfus.update!(e::Entry)
     end
 end
 
-function IonicEfus.unmount!(e::Entry)
+function unmount!(e::Entry)
+    if e.widget !== nothing && e._changed_handler_id !== 0
+        signal_handler_disconnect(e.widget, e._changed_handler_id)
+        e._changed_handler_id = 0
+    end
     _gtakunmountwidget!(e)
     return
 end

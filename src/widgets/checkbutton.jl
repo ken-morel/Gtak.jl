@@ -1,17 +1,17 @@
 export CheckButton
 
-@gtakcomponent CheckButton <: GtakWidgetComponent begin
+@gtakwidgetcomponent CheckButton <: GtakWidgetComponent begin
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
 
     const children::Components = []
     const valuelock = ReentrantLock()
-    _signal_id = 0
+    _signal_id::UInt = 0
 end
 
-IonicEfus.params(::Type{CheckButton}) = Set{Symbol}([:value, :ontoggle])
+params(::Type{CheckButton}) = Set{Symbol}([:value, :ontoggle])
 
-function IonicEfus.mount!(c::CheckButton, p::GtakComponent)
+function mount!(c::CheckButton, p::GtakComponent)
     c.parent = p
     c.widget = GtkCheckButton()
     c.widget.active = resolve(c.value)
@@ -21,8 +21,8 @@ function IonicEfus.mount!(c::CheckButton, p::GtakComponent)
     signal_connect(c.widget, "toggled") do _
         if !isnothing(c.ontoggle)
             schedule(
-                c, Sched.CallbackCall(c.ontoggle, Sched.UserInteractive) do
-                    c.ontoggle(c.widget.active)
+                c, Sched.CallbackCall(c.ontoggle, Sched.High) do
+                    @invokelatest c.ontoggle(c.widget.active)
                 end
             )
         end
@@ -45,7 +45,7 @@ function IonicEfus.mount!(c::CheckButton, p::GtakComponent)
     end
     return c.widget
 end
-function IonicEfus.update!(c::CheckButton)
+function update!(c::CheckButton)
     return _updates(c) do key
         if key == :value
             trylock(c.valuelock) && try
@@ -56,9 +56,10 @@ function IonicEfus.update!(c::CheckButton)
         end
     end
 end
-function IonicEfus.unmount!(c::CheckButton)
+function unmount!(c::CheckButton)
     if c.widget !== nothing  && c._signal_id != 0
         signal_handler_disconnect(c.widget, c._signal_id)
+        c._signal_id = 0
     end
     return _gtakunmountwidget!(c)
 end

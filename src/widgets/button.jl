@@ -1,17 +1,21 @@
 export Button
 
-@gtakcomponent Button <: GtakWidgetComponent begin
+@gtakwidgetcomponent Button <: GtakWidgetComponent begin
     text::MayBeReactive{String} = ""
     onclick::Union{Function, Nothing} = nothing
-    const actionname::Union{String, Nothing} = nothing
+    actionname::Union{String, Nothing} = nothing
 
     label::Union{GtkLabel, Nothing} = nothing
+    _handler_id::UInt = 0
 
     children::Vector{Component} = []
 end
 
 
-function IonicEfus.mount!(b::Button, p::GtakComponent)
+params(::Type{Button}) = Set{Symbol}([:text, :onclick, :actionname])
+
+
+function mount!(b::Button, p::GtakComponent)
     b.parent = p
     b.widget = GtkButton()
     if !isnothing(b.actionname)
@@ -19,18 +23,17 @@ function IonicEfus.mount!(b::Button, p::GtakComponent)
     end
     if isempty(b.children)
         b.widget[] = b.label = GtkLabel(b.text)
-
     else
         b.widget[] = mount!(b.children[1], b)
         if length(b.children) > 1
             @warn "Label received more than one child"
         end
     end
-    signal_connect(b.widget, :clicked) do _
+    b._handler_id = signal_connect(b.widget, :clicked) do _
         if !isnothing(b.onclick)
             schedule(
                 b, Sched.CallbackCall(b.onclick, Sched.UserInteractive) do
-                    b.onclick()
+                    @invokelatest b.onclick()
                 end
             )
         end
@@ -40,9 +43,8 @@ function IonicEfus.mount!(b::Button, p::GtakComponent)
     return b.widget
 end
 
-IonicEfus.params(::Type{Button}) = Set{Symbol}([:text, :onclick])
 
-function IonicEfus.update!(c::Button)
+function update!(c::Button)
     return _updates(c) do dirt
         if dirt == :text
             if !isnothing(c.label)
@@ -52,7 +54,11 @@ function IonicEfus.update!(c::Button)
     end
 end
 
-function IonicEfus.unmount!(b::Button)
+function unmount!(b::Button)
+    if b.widget !== nothing && b._handler_id != 0
+        signal_handler_disconnect(b.widget, b._handler_id)
+        b._handler_id = 0
+    end
     _gtakunmountwidget!(b; widgets = [:label, :widget])
     return
 end

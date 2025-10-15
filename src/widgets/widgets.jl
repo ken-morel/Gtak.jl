@@ -1,6 +1,26 @@
 export GtakComponent, scheduleupdate, getpage
 abstract type GtakWidgetComponent <: GtakComponent end
 
+
+macro gtakwidgetcomponent(name::Expr, block)
+    return esc(
+        quote
+            @gtakcomponent $name begin
+                opacity::Union{Float32, Nothing} = 1
+                margin::Union{Int, NTuple{2, Int}, NTuple{4, Int}, Nothing} = nothing
+                align::Union{NTuple{2, Gtk4.Align}, Nothing} = nothing
+                expand::Union{Symbol, Nothing} = nothing
+                canfocus::Union{Bool, Nothing} = nothing
+                cursor::Union{GdkCursor, Nothing} = nothing
+                sensitive::Union{Bool, Nothing} = nothing
+                tooltip::Union{AbstractString, Nothing} = nothing
+                $(LineNumberNode(__source__.line, __source__.file))
+                $block
+            end
+        end
+    )
+end
+
 include("./label.jl")
 include("./button.jl")
 include("./box.jl")
@@ -15,8 +35,8 @@ include("./switch.jl")
 include("./linkbutton.jl")
 
 
-IonicEfus.getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
-IonicEfus.getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
+getparent(p::GtakComponent) = hasproperty(p, :parent) ? p.parent : nothing
+getchildren(p::GtakComponent) = hasproperty(p, :children) ? p.children : nothing
 
 function getpage(c::GtakComponent)
     current = c
@@ -27,7 +47,9 @@ function getpage(c::GtakComponent)
     return
 end
 
-IonicEfus.isdirty(c::GtakComponent) = hasproperty(c, :dirty) && !isempty(c.dirty)
+isdirty(c::GtakComponent) = hasproperty(c, :dirty) && !isempty(c.dirty)
+
+unmount!(c::GtakWidgetComponent) = _gtakunmountwidget!(c)
 
 function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[:widget])
     @lock c.lock begin
@@ -42,7 +64,15 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
             if hasproperty(c, widget) && !isnothing(getfield(c, widget))
                 widget_obj = getfield(c, widget)
                 parent = Gtk4.parent(widget_obj)
-                !isnothing(parent) && delete!(parent, widget_obj)
+                if parent isa GtkFrame || parent isa GtkButton
+                    parent[] = nothing
+                elseif !isnothing(parent)
+                    try
+                        delete!(parent, widget_obj)
+                    catch e
+                        @warn "Error removing widget $(typeof(widgets)) from parent of type $(typeof(parent)) using delete" exception = e
+                    end
+                end
                 setproperty!(c, widget, nothing)
             end
         end
@@ -78,14 +108,14 @@ function scheduleupdate(c::GtakComponent, priority::Sched.Priority = Sched.Norma
     end
 end
 
-function IonicEfus.dirty!(c::GtakComponent, attr::Symbol, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
+function dirty!(c::GtakComponent, attr::Symbol, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
     @lock c.lock if hasproperty(c, :dirty)
         push!(c.dirty, attr)
         !isnothing(priority) && scheduleupdate(c, priority)
     end
     return
 end
-function IonicEfus.dirty!(c::GtakComponent, attr::Symbol, value, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
+function dirty!(c::GtakComponent, attr::Symbol, value, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
     @lock c.lock if hasproperty(c, attr)
         setfield!(c, attr, value)
         dirty!(c, attr, priority)

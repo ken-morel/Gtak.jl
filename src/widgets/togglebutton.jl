@@ -1,17 +1,17 @@
 export ToggleButton
 
-@gtakcomponent ToggleButton <: GtakWidgetComponent begin
+@gtakwidgetcomponent ToggleButton <: GtakWidgetComponent begin
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
 
     const children::Components = []
     const valuelock = ReentrantLock()
-    _signal_id = 0
+    _signal_id::UInt = 0
 end
 
-IonicEfus.params(::Type{ToggleButton}) = Set{Symbol}([:value, :ontoggle])
+params(::Type{ToggleButton}) = Set{Symbol}([:value, :ontoggle])
 
-function IonicEfus.mount!(c::ToggleButton, p::GtakComponent)
+function mount!(c::ToggleButton, p::GtakComponent)
     c.parent = p
     c.widget = GtkToggleButton()
     c.widget.active = resolve(c.value)
@@ -22,7 +22,7 @@ function IonicEfus.mount!(c::ToggleButton, p::GtakComponent)
         if !isnothing(c.ontoggle)
             schedule(
                 c, Sched.CallbackCall(c.ontoggle, Sched.UserInteractive) do
-                    c.ontoggle(c.widget.active)
+                    @invokelatest c.ontoggle(c.widget.active)
                 end
             )
         end
@@ -45,7 +45,7 @@ function IonicEfus.mount!(c::ToggleButton, p::GtakComponent)
     end
     return c.widget
 end
-function IonicEfus.update!(c::ToggleButton)
+function update!(c::ToggleButton)
     return _updates(c) do key
         if key == :value
             trylock(c.valuelock) && try
@@ -56,7 +56,7 @@ function IonicEfus.update!(c::ToggleButton)
         end
     end
 end
-function IonicEfus.unmount!(c::ToggleButton)
+function unmount!(c::ToggleButton)
     if c.widget !== nothing  && c._signal_id != 0
         signal_handler_disconnect(c.widget, c._signal_id)
     end

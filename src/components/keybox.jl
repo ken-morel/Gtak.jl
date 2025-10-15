@@ -31,7 +31,7 @@ end
 
 function rebuildcontent!(r::KeyBox)
     empty!(r.widget)
-    for comp in r.builder()
+    for comp in @invokelatest r.builder()
         push!(r.widget, mount!(comp, r.innerbox))
     end
     return

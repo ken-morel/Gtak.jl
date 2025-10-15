@@ -1,4 +1,4 @@
-export Application, application, reload!
+export Application, application, reload!, configdirs, cachedir
 
 """
     Base.@kwdef mutable struct Application <: AbstractGtakApplication
@@ -10,7 +10,13 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     id::String
     windows::Vector{AbstractGtakWindow} = []
     app::Union{GtkApplication, Nothing} = nothing
+    stores::Dict{Symbol, Atak.AbstractStoreNode} = Dict()
+    data::Dict{Symbol, Any} = Dict()
 end
+
+configdirs(a::Application) = joinpath.(BaseDirs.config(), (a.id,))
+cachedir(a::Application) = joinpath(BaseDirs.cache(), a.id)
+
 
 Base.push!(app::Application, win::AbstractGtakWindow) = push!(app.windows, win)
 
@@ -21,10 +27,9 @@ Create the application, initialize using the
 passed function and then mount the application
 and return it.
 """
-function application(init::Function, id::String)
-    app = Application(; id)
+function application(init::Function, id::String; args...)
+    app = Application(; id, args...)
     init(app)
-    mount!(app)
     return app
 end
 
@@ -34,7 +39,7 @@ end
 Trigger reload of the current page or
 all pages of the windows of the application.
 """
-reload!(a::Application; all = false) = foreach(w -> reload!(w; all = all), a.windows)
+reload!(a::Application; all = false) = foreach(w -> reload!(w; all), a.windows)
 
 """
     Base.run(app::Application)
@@ -47,7 +52,7 @@ function Base.run(app::Application)
         mount!(app)
     end
     if isempty(app.windows)
-        @warn "No windows to run in application"
+        @warn "No windows to show in gtak application $(app.id)"
     end
     return run(app.app)
 end

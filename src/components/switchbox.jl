@@ -43,7 +43,7 @@ function updatecontent!(sb::SwitchBox)
         end
     end
     if isnothing(components) || sb.rebuild
-        components = sb.builder(value)
+        components = @invokelatest  sb.builder(value)
     end
     if isnothing(widgets) || sb.remount
         widgets = [mount!(c, sb.innerbox) for c in components]

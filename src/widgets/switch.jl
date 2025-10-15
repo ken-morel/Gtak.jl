@@ -1,6 +1,6 @@
 export Switch
 
-@gtakcomponent Switch <: GtakWidgetComponent begin
+@gtakwidgetcomponent Switch <: GtakWidgetComponent begin
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
 
@@ -8,9 +8,9 @@ export Switch
     const valuelock = ReentrantLock()
 end
 
-IonicEfus.params(::Type{Switch}) = Set{Symbol}([:value, :ontoggle])
+params(::Type{Switch}) = Set{Symbol}([:value, :ontoggle])
 
-function IonicEfus.mount!(c::Switch, p::GtakComponent)
+function mount!(c::Switch, p::GtakComponent)
     c.parent = p
     c.widget = GtkSwitch()
     c.widget.active = resolve(c.value)
@@ -21,7 +21,7 @@ function IonicEfus.mount!(c::Switch, p::GtakComponent)
         if !isnothing(c.ontoggle)
             schedule(
                 c, Sched.CallbackCall(c.ontoggle, Sched.UserInteractive) do
-                    c.ontoggle(c.widget.active)
+                    @invokelatest c.ontoggle(c.widget.active)
                 end
             )
         end
@@ -44,7 +44,7 @@ function IonicEfus.mount!(c::Switch, p::GtakComponent)
     end
     return c.widget
 end
-function IonicEfus.update!(c::Switch)
+function update!(c::Switch)
     return _updates(c) do key
         if key == :value
             trylock(c.valuelock) && try
@@ -55,7 +55,7 @@ function IonicEfus.update!(c::Switch)
         end
     end
 end
-function IonicEfus.unmount!(c::Switch)
+function unmount!(c::Switch)
     if c.widget !== nothing  && c._signal_id != 0
         signal_handler_disconnect(c.widget, c._signal_id)
     end

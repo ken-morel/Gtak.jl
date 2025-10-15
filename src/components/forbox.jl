@@ -52,7 +52,7 @@ function updatecontent!(l::ForBox)
             item, components, widgets = popat!(l._cache, cacherowidx)
         end
         if l.rebuild || isnothing(components)
-            components = l.builder(item)
+            components = @invokelatest l.builder(item)
         end
         if l.remount || isnothing(widgets)
             widgets = [mount!(c, l.innerbox) for c in components]

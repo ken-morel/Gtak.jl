@@ -4,6 +4,10 @@ using Reexport
 @reexport using IonicEfus
 @reexport using Gtk4
 @reexport using Atak
+@reexport import BaseDirs
+
+import IonicEfus: update!, mount!, unmount!, remount!, getchildren, getparent, dirty!, isdirty, params
+
 
 using FunctionWrappers: FunctionWrapper
 

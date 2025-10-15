@@ -11,6 +11,7 @@ me reused an mounted from an app to another.
 """
 Base.@kwdef mutable struct Window <: AbstractGtakWindow
     const catalyst::Catalyst = Catalyst()
+    _box::Union{GtkBox, Nothing} = nothing
     scheduler::Scheduler = Scheduler()
     router::Router = Router()
     title::String = "Gtak Window"
@@ -40,7 +41,9 @@ Mount and display the page in the window,
 unmounting previously shown page.
 """
 function Base.show(w::Window, p::AbstractPage)
+
     if isnothing(w.window)
+        @warn "Can't show page, window was not mounted"
         return
     end
     if !isnothing(w.current_page)
@@ -48,9 +51,9 @@ function Base.show(w::Window, p::AbstractPage)
     end
     w.current_page = p
     widgets = mount!(p, w.scheduler)
-    box = GtkBox(OV)
-    push!(box, widgets...)
-    return w.window[] = box
+    empty!(w._box)
+    !isempty(widgets)  && push!(w._box, widgets...)
+    return widgets
 end
 
 """
@@ -83,6 +86,8 @@ the underlying gtk widget.
 function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
     w.app = app
     w.window = GtkApplicationWindow(w.app.app, w.title)
+    w._box = GtkBox(:v)
+    w.window[] = w._box
     start!(w.scheduler)
     page = getvalue(w.router.current_page)
     if page isa AbstractPage
@@ -115,6 +120,7 @@ function IonicEfus.unmount!(w::Window)
     stop!(w.scheduler)
     w.window = nothing
     w.app = nothing
+    w._box = nothing
     denature!(w.catalyst)
     return
 end

@@ -13,6 +13,7 @@ macro gtakcomponent(name, block)
                 const lay = SubParams()
                 parent::Union{GtakComponent, Nothing} = nothing
                 widget::Union{GtkWidget, Nothing} = nothing
+                $(LineNumberNode(__source__.line, __source__.file))
                 $block
             end
         end
