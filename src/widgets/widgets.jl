@@ -11,9 +11,10 @@ macro gtakwidgetcomponent(name::Expr, block)
                 align::Union{MayBeReactive{NTuple{2, Gtk4.Align}}, Nothing} = nothing
                 expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
                 canfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
-                cursor::Union{GdkCursor, Nothing} = nothing
-                sensitive::Union{Bool, Nothing} = nothing
-                tooltip::Union{AbstractString, Nothing} = nothing
+                cursor::Union{MayBeReactive{GdkCursor}, Nothing} = nothing
+                sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
+                tooltip::Union{MayBeReactive{String}, Nothing} = nothing
+                visible::Union{MayBeReacive{Bool}, Nothing} = nothing
                 $(LineNumberNode(__source__.line, __source__.file))
                 $block
             end
@@ -47,7 +48,7 @@ function _gtakwidgetupdatecommon(c::C, w, k, v) where {C}
         else
             @warning "Component of type $C received invalid expand $v"
         end
-    elseif k in Set([:canfocus, :opacity, :sensitive, :cursor])
+    elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible])
         setproperty(w, k, v)
     elseif k == :tooltip
         w.tooltip_markup = v
