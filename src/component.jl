@@ -11,8 +11,8 @@ macro gtakcomponent(name, block)
                 const lock = ReentrantLock()
                 const catalyst = Catalyst()
                 const lay = SubParams()
-                parent::Union{GtakComponent, Nothing} = nothing
-                widget::Union{GtkWidget, Nothing} = nothing
+                _parent::Union{GtakComponent, Nothing} = nothing
+                _widget::Union{GtkWidget, Nothing} = nothing
                 $(LineNumberNode(__source__.line, __source__.file))
                 $block
             end

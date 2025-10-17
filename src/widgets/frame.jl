@@ -4,19 +4,19 @@ export Frame
     const box::SubParams = SubParams()
 
     const children::Components = []
-    const innerbox = Box(; box..., children)
+    const _innerbox = Box(; box..., children)
 end
 
-params(::Type{Frame}) = Set{Symbol}([:box])
 
 function mount!(f::Frame, p::GtakComponent)
-    f.parent = p
-    f.widget = GtkFrame()
-    f.widget[] = mount!(f.innerbox, f)
+    f._parent = p
+    f._widget = GtkFrame()
+    _gtakwidgetmountcommon!(b, [])
+    f._widget[] = mount!(f._innerbox, f)
     return f.widget
 end
 
 function unmount!(f::Frame)
-    unmount!(f.innerbox)
+    unmount!(f._innerbox)
     return _gtakunmountwidget!(f)
 end

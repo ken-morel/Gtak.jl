@@ -5,59 +5,53 @@ export Switch
     ontoggle::Union{Function, Nothing} = nothing
 
     const children::Components = []
-    const valuelock = ReentrantLock()
+    const _valuelock = ReentrantLock()
 end
 
-params(::Type{Switch}) = Set{Symbol}([:value, :ontoggle])
 
 function mount!(c::Switch, p::GtakComponent)
-    c.parent = p
-    c.widget = GtkSwitch()
-    c.widget.active = resolve(c.value)
+    c._parent = p
+    c._widget = GtkSwitch()
+    _gtakwidgetmountcommon!(b, [])
     if !isempty(c.children)
-        c.widget[] = mount!(c.children[1])
+        c._widget[] = mount!(c.children[1])
     end
-    signal_connect(c.widget, "toggled") do _
+    signal_connect(c._widget, "toggled") do _
         if !isnothing(c.ontoggle)
             schedule(
                 c, Sched.CallbackCall(c.ontoggle, Sched.UserInteractive) do
-                    @invokelatest c.ontoggle(c.widget.active)
+                    @invokelatest c.ontoggle(c._widget.active)
                 end
             )
         end
         if c.value isa AbstractReactive
             schedule(
                 c, Sched.ReactantUpdate(c.value, Sched.UserInteractive) do
-                    trylock(c.valuelock) && try
-                        @ionic c.value' = c.widget.active
+                    trylock(c._valuelock) && try
+                        @ionic c.value' = c._widget.active
                     finally
-                        unlock(c.valuelock)
+                        unlock(c._valuelock)
                     end
                 end
             )
         end
     end
-    if c.value isa AbstractReactive
-        catalyze!(c.catalyst, c.value) do _
-            dirty!(c, :value)
-        end
-    end
-    return c.widget
+    return c._widget
 end
 function update!(c::Switch)
     return _updates(c) do key
         if key == :value
-            trylock(c.valuelock) && try
-                c.widget.active = resolve(c.value)
+            trylock(c._valuelock) && try
+                c._widget.active = resolve(Bool, c.value)
             finally
-                unlock(c.valuelock)
+                unlock(c._valuelock)
             end
         end
     end
 end
 function unmount!(c::Switch)
-    if c.widget !== nothing  && c._signal_id != 0
-        signal_handler_disconnect(c.widget, c._signal_id)
+    if c._widget !== nothing  && c._signal_id != 0
+        signal_handler_disconnect(c._widget, c._signal_id)
     end
     return _gtakunmountwidget!(c)
 end
