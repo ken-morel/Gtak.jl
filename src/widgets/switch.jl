@@ -1,6 +1,6 @@
 export Switch
 
-@gtakwidgetcomponent Switch <: GtakWidgetComponent begin
+@gtakwidgetcomponent Switch  begin
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
 
@@ -12,7 +12,7 @@ end
 function mount!(c::Switch, p::GtakComponent)
     c._parent = p
     c._widget = GtkSwitch()
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(c, [])
     if !isempty(c.children)
         c._widget[] = mount!(c.children[1])
     end

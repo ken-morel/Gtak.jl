@@ -1,6 +1,6 @@
 export ToggleButton
 
-@gtakwidgetcomponent ToggleButton <: GtakWidgetComponent begin
+@gtakwidgetcomponent ToggleButton  begin
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
 
@@ -13,7 +13,7 @@ end
 function mount!(c::ToggleButton, p::GtakComponent)
     c._parent = p
     c._widget = GtkToggleButton()
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(c, [])
     if !isempty(c.children)
         c._widget[] = mount!(c.children[1])
     end

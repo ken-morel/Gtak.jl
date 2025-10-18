@@ -1,13 +1,13 @@
 export Spinner
 
-@gtakwidgetcomponent Spinner <: GtakWidgetComponent begin
+@gtakwidgetcomponent Spinner  begin
     spinning::MayBeReactive{Bool} = true
 end
 
 function mount!(s::Spinner, p::GtakComponent)
     s._parent = p
     s._widget = GtkSpinner()
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(s, [])
     return s._widget
 end
 

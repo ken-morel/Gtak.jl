@@ -1,6 +1,6 @@
 export CheckButton
 
-@gtakwidgetcomponent CheckButton <: GtakWidgetComponent begin
+@gtakwidgetcomponent CheckButton  begin
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
 
@@ -14,7 +14,7 @@ function mount!(c::CheckButton, p::GtakComponent)
     c._parent = p
     c._widget = GtkCheckButton()
     c._widget.active = resolve(c.value)
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(c, [])
     if !isempty(c.children)
         c._widget[] = mount!(c.children[1])
     end

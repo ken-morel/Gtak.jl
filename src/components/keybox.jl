@@ -8,17 +8,15 @@ export KeyBox
     const innerbox::Box = Box(; box...)
 end
 
-IonicEfus.params(::Type{KeyBox}) = Set{Symbol}([:deps, :builder, :box])
-
 function IonicEfus.mount!(r::KeyBox, p::GtakComponent)
-    r.widget = mount!(r.innerbox, r)
-    r.parent = p
+    r._widget = mount!(r.innerbox, r)
+    r._parent = p
     callback = (_) -> dirty!(r, :deps)
     for dep in r.deps
         catalyze!(callback, r.catalyst, dep)
     end
     rebuildcontent!(r)
-    return r.widget
+    return r._widget
 end
 
 function IonicEfus.update!(r::KeyBox)
@@ -30,9 +28,9 @@ function IonicEfus.update!(r::KeyBox)
 end
 
 function rebuildcontent!(r::KeyBox)
-    empty!(r.widget)
+    empty!(r._widget)
     for comp in @invokelatest r.builder()
-        push!(r.widget, mount!(comp, r.innerbox))
+        push!(r._widget, mount!(comp, r.innerbox))
     end
     return
 end
@@ -40,10 +38,10 @@ end
 function IonicEfus.unmount!(r::KeyBox)
     unmount!(r.innerbox)
 
-    denature!(r.catalyst)
+    denature!(r._catalyst)
     empty!(r._cache)
-    empty!(r.dirty)
-    r.widget = nothing
-    r.parent = nothing
+    empty!(r._dirty)
+    r._widget = nothing
+    r._parent = nothing
     return
 end

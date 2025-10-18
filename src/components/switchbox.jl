@@ -4,23 +4,22 @@ const _SBCacheRow = Tuple{Any, Components, Vector{<:GtkWidget}}
 @gtakcomponent SwitchBox <: GtakComponent begin
     value::AbstractReactive
     builder::Function
-    rebuild::Bool = false
-    remount::Bool = false
+    rebuild::MayBeReactive{Bool} = false
+    remount::MayBeReactive{Bool} = false
     const box::SubParams = SubParams()
 
     const innerbox = Box(; box...)
     const _cache = Set{_SBCacheRow}()
 end
-IonicEfus.params(::Type{SwitchBox}) = Set{Symbol}([:value, :builder, :rebuild, :remount, :box])
 
 function IonicEfus.mount!(sb::SwitchBox, p::GtakComponent)
-    sb.parent = p
-    sb.widget = mount!(sb.innerbox, sb)
-    catalyze!(sb.catalyst, sb.value) do _
+    sb._parent = p
+    sb._widget = mount!(sb.innerbox, sb)
+    catalyze!(sb._catalyst, sb.value) do _
         dirty!(sb, :value)
     end
     updatecontent!(sb)
-    return sb.widget
+    return sb._widget
 end
 
 function IonicEfus.update!(sb::SwitchBox)
@@ -33,6 +32,8 @@ end
 
 function updatecontent!(sb::SwitchBox)
     value = getvalue(sb.value)
+    rebuild = resolve(Bool, sb.rebuild)
+    remount = resolve(Bool, sb.remount)
     components = widgets = nothing
     found = false
     for row in sb._cache
@@ -42,24 +43,24 @@ function updatecontent!(sb::SwitchBox)
             break
         end
     end
-    if isnothing(components) || sb.rebuild
-        components = @invokelatest  sb.builder(value)
+    if isnothing(components) || rebuild
+        components = @invokelatest sb.builder(value)
     end
-    if isnothing(widgets) || sb.remount
+    if isnothing(widgets) || remount
         widgets = [mount!(c, sb.innerbox) for c in components]
     end
-    empty!(sb.widget)
-    push!(sb.widget, widgets...)
+    empty!(sb._widget)
+    !isempty(widgets) && push!(sb._widget, widgets...)
     !found && push!(sb._cache, _SBCacheRow((value, components, widgets)))
     return
 end
 function IonicEfus.unmount!(sb::SwitchBox)
     unmount!(sb.innerbox)
 
-    denature!(sb.catalyst)
+    denature!(sb._catalyst)
     empty!(sb._cache)
-    empty!(sb.dirty)
-    sb.widget = nothing
-    sb.parent = nothing
+    empty!(sb._dirty)
+    sb._widget = nothing
+    sb._parent = nothing
     return
 end

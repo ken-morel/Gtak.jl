@@ -1,6 +1,6 @@
 export Grid
 
-@gtakwidgetcomponent Grid <: GtakWidgetComponent begin
+@gtakwidgetcomponent Grid  begin
     spacing::Union{NTuple{2, Int}, Nothing} = nothing
     homogeneous::Union{NTuple{2, Bool}, Nothing} = nothing
 
@@ -11,7 +11,7 @@ end
 function mount!(g::Grid, p::GtakComponent)
     g._parent = p
     g._widget = GtkGrid()
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(g, [])
 
     for child in g.children
         lay = getcomponentlayout(child)

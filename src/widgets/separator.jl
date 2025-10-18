@@ -1,6 +1,6 @@
 export Separator
 
-@gtakwidgetcomponent Separator <: GtakWidgetComponent begin
+@gtakwidgetcomponent Separator  begin
     orient::MayBeReactive{Gtk4.Orientation} = O_H
 end
 
@@ -8,7 +8,7 @@ end
 function mount!(s::Separator, p::GtakComponent)
     s._parent = p
     s._widget = GtkSeparator(resolve(Gtk4.Orientation, s.orient))
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(s, [])
     return s._widget
 end
 

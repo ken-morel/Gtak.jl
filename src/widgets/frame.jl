@@ -1,6 +1,6 @@
 export Frame
 
-@gtakwidgetcomponent Frame <: GtakWidgetComponent begin
+@gtakwidgetcomponent Frame  begin
     const box::SubParams = SubParams()
 
     const children::Components = []
@@ -11,9 +11,9 @@ end
 function mount!(f::Frame, p::GtakComponent)
     f._parent = p
     f._widget = GtkFrame()
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(f, [])
     f._widget[] = mount!(f._innerbox, f)
-    return f.widget
+    return f._widget
 end
 
 function unmount!(f::Frame)

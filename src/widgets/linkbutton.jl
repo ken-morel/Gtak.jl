@@ -1,14 +1,14 @@
 export LinkButton
 
-@gtakwidgetcomponent LinkButton <: GtakWidgetComponent begin
+@gtakwidgetcomponent LinkButton  begin
     uri::MayBeReactive{String}
-    text::Union{MayBeRactive{String}, Nothing} = nothing
+    text::Union{MayBeReactive{String}, Nothing} = nothing
 end
 
 function mount!(lb::LinkButton, p::GtakComponent)
     lb._parent = p
     lb._widget = GtkLinkButton(lb.link)
-    _gtakwidgetmountcommon!(b, [])
+    _gtakwidgetmountcommon!(lb, [])
     return lb._widget
 end
 

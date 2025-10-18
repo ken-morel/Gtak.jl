@@ -1,6 +1,6 @@
 export Button
 
-@gtakwidgetcomponent Button <: GtakWidgetComponent begin
+@gtakwidgetcomponent Button  begin
     text::MayBeReactive{String} = ""
     onclick::Union{Function, Nothing} = nothing
     actionname::Union{String, Nothing} = nothing
@@ -37,7 +37,7 @@ function mount!(b::Button, p::GtakComponent)
         end
         return
     end
-    return b.widget
+    return b._widget
 end
 
 

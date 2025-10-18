@@ -1,9 +1,9 @@
 export Box, HBox, VBox
 
-@gtakwidgetcomponent Box <: GtakWidgetComponent begin
+@gtakwidgetcomponent Box  begin
     orient::Gtk4.Orientation = Gtk4.Orientation_VERTICAL
     spacing::Union{MayBeReactive{Int}, Nothing} = nothing
-    homogeneous::Union{MayBeReactive{Bool}} = nothing
+    homogeneous::Union{MayBeReactive{Bool}, Nothing} = nothing
 
     const children::Vector{Component} = []
 end
@@ -22,15 +22,15 @@ function mount!(b::Box, p::GtakComponent)
         widget = mount!(child, b)
         push!(b._widget, widget)
     end
-    return b.widget
+    return b._widget
 end
 
 function update!(b::Box)
     return _updates(b) do dirt
         if dirt == :spacing && !isnothing(b.spacing)
-            b.widget.spacing = resolve(Int, b.spacing)
+            b._widget.spacing = resolve(Int, b.spacing)
         elseif dirt == :homogeneous && !isnothing(b.homogeneous)
-            b.widget.homogeneous = resolve(Bool, b.homogeneous)
+            b._widget.homogeneous = resolve(Bool, b.homogeneous)
         end
     end
 end

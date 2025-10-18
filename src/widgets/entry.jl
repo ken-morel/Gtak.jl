@@ -1,6 +1,6 @@
 export Entry
 
-@gtakwidgetcomponent Entry <: GtakWidgetComponent begin
+@gtakwidgetcomponent Entry  begin
     text::MayBeReactive{String} = ""
     placeholder::MayBeReactive{String} = ""
     onchange::Union{Function, Nothing} = nothing
@@ -14,7 +14,7 @@ end
 function mount!(e::Entry, p::GtakComponent)
     e._parent = p
     e._widget = GtkEntry(text = resolve(String, e.value))
-    _gtakwidgetmountcommon!(b, [:text])
+    _gtakwidgetmountcommon!(e, [:text])
     if e.text isa AbstractReactive
         catalyze!(e._catalyst, e.text) do r
             trylock(e._textlock) && try

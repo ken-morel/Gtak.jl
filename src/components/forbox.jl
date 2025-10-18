@@ -12,16 +12,15 @@ const _RLCache = Tuple{Any, Components, Vector{<:GtkWidget}}
     innerbox::Box = Box(; box...)
     _cache::Vector{_RLCache} = []
 end
-IonicEfus.params(::ForBox) = Set{Symbol}([:items, :builder, :box])
 
 function IonicEfus.mount!(l::ForBox, p::GtakComponent)
-    l.parent = p
-    l.items isa AbstractReactive && catalyze!(l.catalyst, l.items) do _
+    l._parent = p
+    l.items isa AbstractReactive && catalyze!(l._catalyst, l.items) do _
         dirty!(l, :items)
     end
-    l.widget = mount!(l.innerbox, l)
+    l._widget = mount!(l.innerbox, l)
     updatecontent!(l)
-    return l.widget
+    return l._widget
 end
 function IonicEfus.update!(l::ForBox)
     return _updates(l) do key
@@ -58,8 +57,8 @@ function updatecontent!(l::ForBox)
             widgets = [mount!(c, l.innerbox) for c in components]
         end
         for widget in widgets
-            if Gtk4.parent(widget) != l.widget
-                push!(l.widget, widget)
+            if Gtk4.parent(widget) != l._widget
+                push!(l._widget, widget)
             end
         end
         push!(final, (item, components, widgets))
@@ -73,10 +72,10 @@ function updatecontent!(l::ForBox)
 end
 function IonicEfus.unmount!(l::ForBox)
     unmount!(l.innerbox)
-    denature!(l.catalyst)
+    denature!(l._catalyst)
     empty!(l._cache)
-    empty!(l.dirty)
-    l.widget = nothing
-    l.parent = nothing
+    empty!(l._dirty)
+    l._widget = nothing
+    l._parent = nothing
     return
 end
