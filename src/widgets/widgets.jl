@@ -11,10 +11,15 @@ macro gtakwidgetcomponent(name::Symbol, block)
                 align::Union{MayBeReactive{NTuple{2, Gtk4.Align}}, Nothing} = nothing
                 expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
                 canfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
+                hasfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
                 cursor::Union{MayBeReactive{GdkCursor}, Nothing} = nothing
                 sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
                 tooltip::Union{MayBeReactive{String}, Nothing} = nothing
                 visible::Union{MayBeReactive{Bool}, Nothing} = nothing
+                css_classes::Union{MayBeReactive{Vector{String}}, Nothing} = nothing
+                css_name::Union{MayBeReactive{String}, Nothing} = nothing
+                width_request::Union{MayBeReactive{Int}, Nothing} = nothing
+                height_request::Union{MayBeReactive{Int}, Nothing} = nothing
                 lay::SubParams = SubParams()
                 $(LineNumberNode(__source__.line, __source__.file))
                 $block
@@ -24,7 +29,8 @@ macro gtakwidgetcomponent(name::Symbol, block)
 end
 const _gtak_common = Set(
     [
-        :opacity, :margin, :align, :expand, :canfocus, :cursor, :sensitive, :tooltip, :visible,
+        :opacity, :margin, :align, :expand, :canfocus, :hasfocus, :cursor, :sensitive, :tooltip, :visible,
+        :css_classes, :css_name, :width_request, :height_request,
     ]
 )
 function _gtakwidgetupdatecommon(c, w, k, v)
@@ -49,10 +55,23 @@ function _gtakwidgetupdatecommon(c, w, k, v)
         else
             @warn "Component of type $C received invalid expand $v"
         end
-    elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible])
+    elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible, :width_request, :height_request])
         setproperty!(w, k, v)
     elseif k == :tooltip
         w.tooltip_markup = v
+    elseif k == :css_classes
+        Gtk4.set_css_classes(w, v)
+    elseif k == :css_name
+        w.name = v
+    elseif k == :hasfocus
+        if v
+            Gtk4.grab_focus(w)
+        else
+            toplevel = Gtk4.Gtk.toplevel(w)
+            if toplevel isa Gtk4.GtkWindow
+                toplevel.focus = nothing
+            end
+        end
     end
 
 end
@@ -100,7 +119,6 @@ function _trackreactiveattributes(c::GtakComponent, skip::Vector = [])
         if val isa AbstractReactive
             catalyze!(c._catalyst, val) do _
                 dirty!(c, attr)
-                return
             end
         end
     end
@@ -119,6 +137,15 @@ include("./togglebutton.jl")
 include("./checkbutton.jl")
 include("./switch.jl")
 include("./linkbutton.jl")
+include("./image.jl")
+include("./progressbar.jl")
+include("./scale.jl")
+include("./textview.jl")
+include("./scrolledwindow.jl")
+include("./comboboxtext.jl")
+include("./notebook.jl")
+include("./paned.jl")
+include("./video.jl")
 
 
 @generated getparent(c::GtakComponent) = hasfield(c, :_parent) ? :(c._parent) : nothing

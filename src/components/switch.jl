@@ -37,6 +37,13 @@ function updatecontent!(sb::Switch)
     remount = resolve(Bool, sb.remount)
     components = widgets = nothing
     found = false
+
+    # Detach current widgets from the container
+    for child_comp in sb._content
+        widget = child_comp._widget
+        !isnothing(widget) && Gtk4.remove!(sb.innerbox._widget, widget)
+    end
+
     for row in sb._cache
         if row[1] == value
             found = true
@@ -44,16 +51,17 @@ function updatecontent!(sb::Switch)
             break
         end
     end
+
     if isnothing(components) || rebuild
-        unmount!.(sb._content)
         remount = true
         components = @invokelatest sb.builder(value)
     end
+
     if isnothing(widgets) || remount
         widgets = [mount!(c, sb.innerbox) for c in components]
     end
-    empty!(sb._widget)
-    !isempty(widgets) && push!(sb._widget, widgets...)
+
+    !isempty(widgets) && push!(sb.innerbox._widget, widgets...)
     !found && push!(sb._cache, _SBCacheRow((value, components, widgets)))
     sb._content = components
     return
