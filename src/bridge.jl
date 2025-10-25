@@ -18,3 +18,9 @@ const A_C = Gtk4.Align_CENTER
 const A_E = Gtk4.Align_END
 const A_F = Gtk4.Align_FILL
 const A_S = Gtk4.Align_START
+
+export P_A, P_AUTO, P_N
+
+const P_A = Gtk4.PolicyType_ALWAYS
+const P_AUTO = Gtk4.PolicyType_AUTOMATIC
+const P_N = Gtk4.PolicyType_NEVER

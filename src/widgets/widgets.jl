@@ -138,6 +138,15 @@ include("./togglebutton.jl")
 include("./checkbutton.jl")
 include("./switch.jl")
 include("./linkbutton.jl")
+include("./image.jl")
+include("./progressbar.jl")
+include("./scale.jl")
+include("./textview.jl")
+include("./scrolledwindow.jl")
+include("./comboboxtext.jl")
+include("./notebook.jl")
+include("./paned.jl")
+
 
 
 @generated getparent(c::GtakComponent) = hasfield(c, :_parent) ? :(c._parent) : nothing
