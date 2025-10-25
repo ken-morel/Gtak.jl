@@ -119,7 +119,6 @@ function _trackreactiveattributes(c::GtakComponent, skip::Vector = [])
         if val isa AbstractReactive
             catalyze!(c._catalyst, val) do _
                 dirty!(c, attr)
-                return
             end
         end
     end
@@ -146,7 +145,7 @@ include("./scrolledwindow.jl")
 include("./comboboxtext.jl")
 include("./notebook.jl")
 include("./paned.jl")
-
+include("./video.jl")
 
 
 @generated getparent(c::GtakComponent) = hasfield(c, :_parent) ? :(c._parent) : nothing
