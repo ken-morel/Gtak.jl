@@ -31,51 +31,60 @@ function IonicEfus.update!(l::For)
 end
 
 function updatecontent!(l::For)
-    items = resolve(l.items)
-    final = Vector{_RLCache}()
+    new_items = resolve(l.items)
     rebuild = resolve(Bool, l.rebuild)
     remount = resolve(Bool, l.remount)
-    println(" --- placing items ---")
-    @time for item in items
-        cacherowidx = 0
-        for (rowidx, (rowitem, _, rowwidgets)) in enumerate(l._cache)
-            if rowitem === item
-                cacherowidx = rowidx
-                break
-            else
-                for widget in rowwidgets
-                    p = Gtk4.parent(widget)
-                    !isnothing(p) && Gtk4.delete!(p, widget)
-                end
+
+    old_cache_map = Dict{Any, Tuple{Components, Vector{<:GtkWidget}}}()
+    for (item, components, widgets) in l._cache
+        old_cache_map[item] = (components, widgets)
+    end
+
+    # Clear the innerbox to re-add widgets in the correct order
+    empty!(l.innerbox._widget)
+
+    final_cache = Vector{_RLCache}()
+
+    for item in new_items
+        components = nothing
+        widgets = nothing
+
+        if haskey(old_cache_map, item)
+            # Item exists in old cache, try to reuse
+            (cached_components, cached_widgets) = pop!(old_cache_map, item)
+            components = cached_components
+            widgets = cached_widgets
+
+            if rebuild
+                unmount!.(components)
+                components = @invokelatest l.builder(item)
+                remount = true # Force remount if components were rebuilt
             end
-        end
-        components = widgets = nothing
-        if cacherowidx > 0
-            item, components, widgets = popat!(l._cache, cacherowidx)
-        end
-        println("Maybe building")
-        @time if rebuild || isnothing(components)
+
+            if remount || isnothing(widgets)
+                # If remount is true or widgets were never mounted (e.g., initial build)
+                unmount!.(cached_components) # Unmount old components if new ones are being mounted
+                widgets = [mount!(c, l.innerbox) for c in components]
+            end
+        else
+            # New item, build and mount
             components = @invokelatest l.builder(item)
-        end
-        println("Mounting them")
-        @time if remount || isnothing(widgets)
             widgets = [mount!(c, l.innerbox) for c in components]
         end
-        println("placing widgets")
-        @time for widget in widgets
-            if Gtk4.parent(widget) != l._widget
-                push!(l._widget, widget)
-            end
+
+        # Add widgets to the innerbox in the correct order
+        for widget in widgets
+            push!(l.innerbox._widget, widget)
         end
-        println("Pushing to list")
-        push!(final, (item, components, widgets))
+        push!(final_cache, (item, components, widgets))
     end
-    println("Unmounting cache")
-    @time while !isempty(l._cache)
-        c = pop!(l._cache)[2]
-        unmount!.(c)
+
+    # Unmount components that are no longer in the new_items list
+    for (_, (components, _)) in old_cache_map
+        unmount!.(components)
     end
-    append!(l._cache, final)
+
+    l._cache = final_cache
     return
 end
 function IonicEfus.unmount!(l::For)

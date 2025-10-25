@@ -1,3 +1,3 @@
-include("./forbox.jl")
-include("./keybox.jl")
-include("./switchbox.jl")
+include("./for.jl")
+include("./keyed.jl")
+include("./switch.jl")
