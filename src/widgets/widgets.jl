@@ -64,7 +64,14 @@ function _gtakwidgetupdatecommon(c, w, k, v)
     elseif k == :css_name
         w.name = v
     elseif k == :hasfocus
-        v && Gtk4.grab_focus(w)
+        if v
+            Gtk4.grab_focus(w)
+        else
+            toplevel = Gtk4.Gtk.toplevel(w)
+            if toplevel isa Gtk4.GtkWindow
+                toplevel.focus = nothing
+            end
+        end
     end
 
 end
