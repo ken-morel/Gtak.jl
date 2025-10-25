@@ -1,5 +1,18 @@
 export AbstractPage, PageContext, PageBuilder, PageOrBuilder, StaticPage, ReloadablePage
 export onmount!, onunmount!
+export getstores, getdata
+
+Base.@kwdef struct PageContext
+    application::Union{AbstractGtakApplication, Nothing} = nothing
+    window::Union{AbstractGtakWindow, Nothing} = nothing
+    scheduler::Union{Scheduler, Nothing} = nothing
+end
+
+Base.push!(ctx::PageContext, p...; args...) = push!(ctx.window.router, p...; args...)
+Base.pop!(ctx::PageContext, p...; args...) = pop!(ctx.window.router, p...; args...)
+reload!(ctx::PageContext; args...) = reload!(ctx.window; args...)
+getdata(ctx::PageContext) = ctx.application.data
+getstores(ctx::PageContext) = ctx.application.stores
 
 
 """
@@ -24,7 +37,7 @@ mutable struct StaticPage <: AbstractPage
     content::Components
     onmount::Union{Function, Nothing}
     onunmount::Union{Function, Nothing}
-    scheduler::Union{Scheduler, Nothing}
+    context::Union{PageContext, Nothing}
     """
         StaticPage(c::Components)
 
@@ -63,9 +76,9 @@ via the [`reload!`](@ref) method.
 mutable struct ReloadablePage <: AbstractPage
     const builder::PageBuilderFunction
     content::Components
-    scheduler::Union{Scheduler, Nothing}
     onmount::Union{Function, Nothing}
     onunmount::Union{Function, Nothing}
+    context::Union{PageContext, Nothing}
 
     """
         ReloadablePage(builder::Function)
@@ -80,13 +93,12 @@ mutable struct ReloadablePage <: AbstractPage
         )
         page = new(
             builder,
-            builder() do cb
-                onmount!(page, cb)
-            end,
+            Components(),
             nothing,
             nothing,
             nothing,
         )
+        page.content = builder((cb::Function) -> onmount!(cb, page))
         return page
     end
 end
@@ -97,6 +109,7 @@ ReloadablePage(
 
 """
     onmount!(fn::Function, p::AbstractPage)::AbstractPage
+    onmount!(p::AbstractPage, fn::Function)
 
 Bind callback `fn` which will be called
 after the component is mounted, if the
@@ -108,14 +121,17 @@ for that.
 onmount! returns the page it was called upon.
 """
 onmount!(fn::Function, p::AbstractPage) = (p.onmount = fn; p)
+onmount!(p::AbstractPage, fn::Function) = onmount!(fn, p)
 """
     onunmount!(fn::Function, p::AbstractPage)::AbstractPage
+    onunmount!(p::AbstractPage, fn::Function)
 
 Binds fn which will be called before the coponent is
 unmounted.
 onunmount! returns the page it was called upon.
 """
 onunmount!(fn::Function, p::AbstractPage) = (p.onunmount = fn; p)
+onunmount!(p::AbstractPage, fn::Function) = onunmount!(fn, p)
 
 """
     reload!(p::ReloadablePage)
@@ -128,7 +144,7 @@ rebuilds the page.
 function reload!(p::ReloadablePage)
     unmount!(p)
     p.content = p.builder() do cb
-        onmount!(p, cb)
+        onmount!(cb, p)
     end
     return p
 end
@@ -148,11 +164,11 @@ const PageBuilder = FunctionWrapper{AbstractPage, Tuple{}}
 Mount the specified page, and bind it to
 the scheduler for ui updates.
 """
-function IonicEfus.mount!(p::AbstractPage, scheduler::Scheduler)
-    p.scheduler = scheduler
+function IonicEfus.mount!(p::AbstractPage, ctx::Union{PageContext, Nothing} = nothing)
+    p.context = ctx
     contents = mount!.(p.content, (p,))
     unmounter = if !isnothing(p.onmount)
-        p.onmount(p)
+        p.onmount(p, ctx)
     end
     if unmounter isa Function
         onunmount!(unmounter, p)
@@ -161,19 +177,15 @@ function IonicEfus.mount!(p::AbstractPage, scheduler::Scheduler)
 end
 
 "Unmount, then remount the passed page"
-function IonicEfus.remount!(p::AbstractPage)
-    schd = p.scheduler
-    unmount!(p)
-    return mount!(p, schd)
-end
+remount!(::AbstractPage) = error("Remounting pages is unsupported")
 
 "Unmount the page"
-function IonicEfus.unmount!(p::AbstractPage)
+function unmount!(p::AbstractPage)
     if p.onunmount isa Function
         p.onunmount(p)
     end
     foreach(unmount!, p.content)
-    p.scheduler = nothing
+    p.context = nothing
     return
 end
 
@@ -192,4 +204,11 @@ Base.schedule(
 
 Returns the pages current scheduler, or nothing.
 """
-getscheduler(p::AbstractPage) = p.scheduler
+getscheduler(p::AbstractPage)::Union{Sched.Scheduler, Nothing} = !isnothing(getcontext(p)) ? getcontext(p).scheduler : nothing
+
+"""
+    getcontext(p::AbstractPage)
+
+Returns the page's current context.
+"""
+getcontext(p::AbstractPage)::Union{PageContext, Nothing} = p.context

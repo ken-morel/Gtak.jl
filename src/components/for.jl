@@ -1,29 +1,28 @@
-export ForBox
+export For
 const _RLCache = Tuple{Any, Components, Vector{<:GtkWidget}}
 
-@gtakcomponent ForBox <: GtakComponent begin
+@gtakcomponent For <: GtakComponent begin
     items::MayBeReactive
     builder::Function
-    remount::Bool = false
-    rebuild::Bool = false
+    remount::MayBeReactive{Bool} = false
+    rebuild::MayBeReactive{Bool} = false
     const box = SubParams()
 
 
     innerbox::Box = Box(; box...)
     _cache::Vector{_RLCache} = []
 end
-IonicEfus.params(::ForBox) = Set{Symbol}([:items, :builder, :box])
 
-function IonicEfus.mount!(l::ForBox, p::GtakComponent)
-    l.parent = p
-    l.items isa AbstractReactive && catalyze!(l.catalyst, l.items) do _
+function IonicEfus.mount!(l::For, p::GtakComponent)
+    l._parent = p
+    l.items isa AbstractReactive && catalyze!(l._catalyst, l.items) do _
         dirty!(l, :items)
     end
-    l.widget = mount!(l.innerbox, l)
+    l._widget = mount!(l.innerbox, l)
     updatecontent!(l)
-    return l.widget
+    return l._widget
 end
-function IonicEfus.update!(l::ForBox)
+function IonicEfus.update!(l::For)
     return _updates(l) do key
         if key == :items
             updatecontent!(l)
@@ -31,10 +30,13 @@ function IonicEfus.update!(l::ForBox)
     end
 end
 
-function updatecontent!(l::ForBox)
+function updatecontent!(l::For)
     items = resolve(l.items)
     final = Vector{_RLCache}()
-    for item in items
+    rebuild = resolve(Bool, l.rebuild)
+    remount = resolve(Bool, l.remount)
+    println(" --- placing items ---")
+    @time for item in items
         cacherowidx = 0
         for (rowidx, (rowitem, _, rowwidgets)) in enumerate(l._cache)
             if rowitem === item
@@ -51,32 +53,37 @@ function updatecontent!(l::ForBox)
         if cacherowidx > 0
             item, components, widgets = popat!(l._cache, cacherowidx)
         end
-        if l.rebuild || isnothing(components)
+        println("Maybe building")
+        @time if rebuild || isnothing(components)
             components = @invokelatest l.builder(item)
         end
-        if l.remount || isnothing(widgets)
+        println("Mounting them")
+        @time if remount || isnothing(widgets)
             widgets = [mount!(c, l.innerbox) for c in components]
         end
-        for widget in widgets
-            if Gtk4.parent(widget) != l.widget
-                push!(l.widget, widget)
+        println("placing widgets")
+        @time for widget in widgets
+            if Gtk4.parent(widget) != l._widget
+                push!(l._widget, widget)
             end
         end
+        println("Pushing to list")
         push!(final, (item, components, widgets))
     end
-    while !isempty(l._cache)
+    println("Unmounting cache")
+    @time while !isempty(l._cache)
         c = pop!(l._cache)[2]
         unmount!.(c)
     end
     append!(l._cache, final)
     return
 end
-function IonicEfus.unmount!(l::ForBox)
+function IonicEfus.unmount!(l::For)
     unmount!(l.innerbox)
-    denature!(l.catalyst)
+    denature!(l._catalyst)
     empty!(l._cache)
-    empty!(l.dirty)
-    l.widget = nothing
-    l.parent = nothing
+    empty!(l._dirty)
+    l._widget = nothing
+    l._parent = nothing
     return
 end

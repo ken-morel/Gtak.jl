@@ -1,0 +1,11 @@
+name = "Tod"
+uuid = "bbda86b0-90d6-44e8-8859-2abc1c785894"
+version = "0.1.0"
+authors = ["ken-morel <engonken8@gmail.com>"]
+
+[deps]
+Gtak = "9deccea8-f743-493b-a773-936bee031b92"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+
+[compat]
+Revise = "3.10.0"

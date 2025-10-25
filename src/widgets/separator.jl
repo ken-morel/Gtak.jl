@@ -1,13 +1,21 @@
 export Separator
 
-@gtakwidgetcomponent Separator <: GtakWidgetComponent begin
-    orient::Orientation = O_H
+@gtakwidgetcomponent Separator  begin
+    orient::MayBeReactive{Gtk4.Orientation} = O_H
 end
 
-params(::Type{Separator}) = Set{Symbol}([:orient])
 
 function mount!(s::Separator, p::GtakComponent)
-    s.parent = p
-    s.widget = GtkSeparator(s.orient)
-    return s.widget
+    s._parent = p
+    s._widget = GtkSeparator(resolve(Gtk4.Orientation, s.orient))
+    _gtakwidgetmountcommon!(s, [])
+    return s._widget
+end
+
+function update!(l::Separator)
+    return _updates(l) do dirt
+        if dirt == :orient
+            l._widget.orientation = resolve(Gtk4.Orientation, l.orient)
+        end
+    end
 end

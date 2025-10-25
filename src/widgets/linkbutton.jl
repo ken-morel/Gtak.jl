@@ -1,14 +1,23 @@
 export LinkButton
 
-@gtakwidgetcomponent LinkButton <: GtakWidgetComponent begin
-    link::String
-    text::String = link
+@gtakwidgetcomponent LinkButton  begin
+    uri::MayBeReactive{String}
+    text::Union{MayBeReactive{String}, Nothing} = nothing
 end
 
-params(::Type{LinkButton}) = Set{Symbol}([:link, :text])
-
 function mount!(lb::LinkButton, p::GtakComponent)
-    lb.parent = p
-    lb.widget = GtkLinkButton(lb.link, lb.text)
-    return lb.widget
+    lb._parent = p
+    lb._widget = GtkLinkButton(lb.link)
+    _gtakwidgetmountcommon!(lb, [])
+    return lb._widget
+end
+
+function update!(l::LinkButton)
+    return _updates(l) do dirt
+        if dirt == :uri
+            l._widget.uri = resolve(String, l.uri)
+        elseif dirt == :text && !isnothing(l.text)
+            l._widget.label = resolve(String, l.text)
+        end
+    end
 end

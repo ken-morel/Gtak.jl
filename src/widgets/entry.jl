@@ -1,80 +1,70 @@
 export Entry
 
-@gtakwidgetcomponent Entry <: GtakWidgetComponent begin
+@gtakwidgetcomponent Entry  begin
     text::MayBeReactive{String} = ""
-    placeholder::String = ""
+    placeholder::MayBeReactive{String} = ""
     onchange::Union{Function, Nothing} = nothing
+    name::Union{MayBeReactive{String}, Nothing} = nothing
 
     _changed_handler_id::UInt = 0
 
-    const textlock = Base.ReentrantLock()
+    const _textlock = Base.ReentrantLock()
 end
 
-params(::Type{Entry}) = Set{Symbol}([:text, :placeholder, :onchange])
 
 function mount!(e::Entry, p::GtakComponent)
-    e.parent = p
-    e.widget = GtkEntry()
-
-    e.widget.text = resolve(String, e.text)
-    e.widget.placeholder_text = resolve(String, e.placeholder)
-
+    e._parent = p
+    e._widget = GtkEntry(text = resolve(String, e.text))
+    _gtakwidgetmountcommon!(e, [:text])
     if e.text isa AbstractReactive
-        catalyze!(e.catalyst, e.text) do r
-            trylock(e.textlock) && try
+        catalyze!(e._catalyst, e.text) do r
+            trylock(e._textlock) && try
                 val = getvalue(r)
-                if e.widget.text != val
-                    e.widget.text = val
+                if e._widget.text != val
+                    e._widget.text = val
                 end
             finally
-                unlock(e.textlock)
+                unlock(e._textlock)
             end
         end
     end
-    e._changed_handler_id = signal_connect(e.widget, "changed") do _
-        trylock(e.textlock) && try
-            current_text = e.widget.text
+    e._changed_handler_id = signal_connect(e._widget, "changed") do _
+        current_text = e._widget.text
+        trylock(e._textlock) && try
             if e.text isa AbstractReactive
                 if getvalue(e.text) != current_text
                     setvalue!(e.text, current_text)
                 end
             end
-            if !isnothing(e.onchange)
-                schedule(
-                    e, Sched.CallbackCall(e.onchange, Sched.Normal) do
-                        @invokelatest e.onchange(current_text)
-                    end
-                )
-            end
+
         finally
-            unlock(e.textlock)
+            unlock(e._textlock)
+        end
+        if !isnothing(e.onchange)
+            schedule(
+                e, Sched.CallbackCall(e.onchange, Sched.Normal) do
+                    @invokelatest e.onchange(current_text)
+                end
+            )
         end
     end
 
-    _trackreactiveattributes(e)
-    return e.widget
+    return e._widget
 end
 
 function update!(e::Entry)
     return _updates(e) do dirt
-        if dirt == :text
-            trylock(e.textlock) && try
-                new_text = resolve(String, e.text)
-                if e.widget.text != new_text
-                    e.widget.text = new_text
-                end
-            finally
-                unlock(e.textlock)
-            end
-        elseif dirt == :placeholder
-            e.widget.placeholder_text = e.placeholder
+        if dirt == :placeholder
+            e._widget.placeholder_text = resolve(String, e.placeholder)
+        elseif dirt == :name && !isnothing(e.name)
+            e._widget.name = resolve(String, e.name)
         end
     end
 end
 
 function unmount!(e::Entry)
-    if e.widget !== nothing && e._changed_handler_id !== 0
-        signal_handler_disconnect(e.widget, e._changed_handler_id)
+    if e._widget !== nothing && e._changed_handler_id !== 0
+        signal_handler_disconnect(e._widget, e._changed_handler_id)
         e._changed_handler_id = 0
     end
     _gtakunmountwidget!(e)

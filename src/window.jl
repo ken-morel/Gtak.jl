@@ -18,7 +18,18 @@ Base.@kwdef mutable struct Window <: AbstractGtakWindow
     window::Union{GtkWindow, Nothing} = nothing
     app::Union{AbstractGtakApplication, Nothing} = nothing
     current_page::Union{AbstractPage, Nothing} = nothing
+    context::Union{PageContext, Nothing} = nothing
 end
+
+"""
+    getcontext(::Window)
+
+Get the window's [`PageContext`](@ref).
+"""
+getcontext(w::Window) = w.context
+
+getapplication(w::Window) = w.app
+getscheduler(w::Window) = w.scheduler
 
 """
     reload!(w::Window; all::Bool = false)
@@ -41,16 +52,14 @@ Mount and display the page in the window,
 unmounting previously shown page.
 """
 function Base.show(w::Window, p::AbstractPage)
-
     if isnothing(w.window)
-        @warn "Can't show page, window was not mounted"
         return
     end
     if !isnothing(w.current_page)
         unmount!(w.current_page)
     end
     w.current_page = p
-    widgets = mount!(p, w.scheduler)
+    widgets = mount!(p, getcontext(w))
     empty!(w._box)
     !isempty(widgets)  && push!(w._box, widgets...)
     return widgets
@@ -84,6 +93,7 @@ Mounts the window in the application returning
 the underlying gtk widget.
 """
 function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
+    w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
     w.app = app
     w.window = GtkApplicationWindow(w.app.app, w.title)
     w._box = GtkBox(:v)
@@ -94,9 +104,10 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
         show(w, page)
     end
     catalyze!(w.catalyst, w.router.current_page) do r
-        if r isa AbstractPage
-            schedule!(w.sheduler, Sched.High) do
-                show(w, getvalue(r))
+        page = getvalue(r)
+        if !isnothing(page)
+            schedule!(getscheduler(w), Sched.High) do
+                show(w, page)
             end
         end
     end
@@ -121,6 +132,7 @@ function IonicEfus.unmount!(w::Window)
     w.window = nothing
     w.app = nothing
     w._box = nothing
+    w.context = nothing
     denature!(w.catalyst)
     return
 end

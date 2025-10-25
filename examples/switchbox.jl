@@ -17,7 +17,7 @@ end
         staticpage"""
         Label text=("Notebook of $(ITEM')s")::String
         Frame
-          ForBox items=ITEMS box:orient=OH
+          ForBox items=ITEMS box:orient=O_H
             builder(item)
               Button text=item onclick=(() -> ITEM' = item)
             end
