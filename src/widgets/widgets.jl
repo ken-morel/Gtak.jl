@@ -6,7 +6,7 @@ macro gtakwidgetcomponent(name::Symbol, block)
     return esc(
         quote
             @gtakcomponent $name <: GtakWidgetComponent  begin
-                opacity::Union{MayBeReactive{Float32}, Nothing} = nothing
+                opacity::Union{MayBeReactive{Float64}, Nothing} = nothing
                 margin::Union{MayBeReactive{Union{Int, NTuple{2, Int}, NTuple{4, Int}}}, Nothing} = nothing
                 align::Union{MayBeReactive{NTuple{2, Gtk4.Align}}, Nothing} = nothing
                 expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
@@ -15,6 +15,7 @@ macro gtakwidgetcomponent(name::Symbol, block)
                 sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
                 tooltip::Union{MayBeReactive{String}, Nothing} = nothing
                 visible::Union{MayBeReactive{Bool}, Nothing} = nothing
+                lay::SubParams = SubParams()
                 $(LineNumberNode(__source__.line, __source__.file))
                 $block
             end
@@ -23,18 +24,18 @@ macro gtakwidgetcomponent(name::Symbol, block)
 end
 const _gtak_common = Set(
     [
-        :opacity, :margin, :align, :expand, :canfocus, :cursor, :sensitive, :tooltip,
+        :opacity, :margin, :align, :expand, :canfocus, :cursor, :sensitive, :tooltip, :visible,
     ]
 )
-function _gtakwidgetupdatecommon(c::C, w, k, v) where {C}
+function _gtakwidgetupdatecommon(c, w, k, v)
     return if k == :margin
         if length(v) == 1
-            w.margin_top = w.margin_bottom = w.margin_left = w.margin_right = v
+            w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
         elseif length(v) == 2
-            w.margin_top, w.margin_left = v
-            w.margin_bottom, w.margin_right = v
+            w.margin_top, w.margin_start = v
+            w.margin_bottom, w.margin_end = v
         elseif length(v) == 4
-            w.margin_top, w.margin_right, w.margin_bottom, w.margin_left = v
+            w.margin_top, w.margin_end, w.margin_bottom, w.margin_start = v
         else
             @warn "Component of type $C Invalid margin $v"
         end
@@ -49,7 +50,7 @@ function _gtakwidgetupdatecommon(c::C, w, k, v) where {C}
             @warn "Component of type $C received invalid expand $v"
         end
     elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible])
-        setproperty(w, k, v)
+        setproperty!(w, k, v)
     elseif k == :tooltip
         w.tooltip_markup = v
     end
@@ -59,10 +60,10 @@ for n in [:lock, :trylock, :unlock]
     @eval Base.$n(c::GtakComponent) = Base.$n(c._lock)
 end
 function _updates(fn::Function, c::Component)
-    !ismounted(c) && return
+    ismounted(c) || return
     @lock c while !isempty(c._dirty)
         key = pop!(c._dirty)
-        if c in _gtak_common
+        if key in _gtak_common
             val = getproperty(c, key)
 
             isnothing(val) || _gtakwidgetupdatecommon(
@@ -81,13 +82,19 @@ function _updates(fn::Function, c::Component)
 end
 update!(c::GtakComponent) = _updates(identity, c)
 function _gtakwidgetmountcommon!(c, donttrack::Vector)
-    isempty(params(c)) || (dirty!.(c, params(c)); update!(c))
+    @assert !isnothing(c._widget)
+    for param in params(c)
+        dirty!(c, param)
+    end
+    update!(c)
+    @assert !isnothing(c._widget)
     _trackreactiveattributes(c, donttrack)
+    @assert !isnothing(c._widget)
     return
 end
 function _trackreactiveattributes(c::GtakComponent, skip::Vector = [])
     toskip = Set(skip)
-    for attr in params(c)::Set{Symbol}
+    for attr in params(c)
         attr in toskip && continue
         val = getfield(c, attr)
         if val isa AbstractReactive
@@ -163,23 +170,22 @@ end
 
 function scheduleupdate(c::GtakComponent, priority::Sched.Priority = Sched.Normal)
     page = getpage(c)
-    return if !isnothing(page) && !isnothing(page.scheduler)
-
-        schedule!(page.scheduler, Sched.ComponentUpdate(c, priority))
+    return if !isnothing(page) && !isnothing(getscheduler(page))
+        schedule!(getscheduler(page), Sched.ComponentUpdate(c, priority))
     end
 end
 
-function dirty!(c::GtakComponent, attr::Symbol, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
+function dirty!(c::GtakComponent, attr::Symbol; priority::Union{Sched.Priority, Nothing} = Sched.Normal)
     @lock c if hasproperty(c, :_dirty)
         push!(c._dirty, attr)
         !isnothing(priority) && scheduleupdate(c, priority)
     end
     return
 end
-function dirty!(c::GtakComponent, attr::Symbol, value, priority::Union{Sched.Priority, Nothing} = Sched.Normal)
+function dirty!(c::GtakComponent, attr::Symbol, value; priority::Union{Sched.Priority, Nothing} = Sched.Normal)
     @lock c if hasproperty(c, attr)
         setfield!(c, attr, value)
-        dirty!(c, attr, priority)
+        dirty!(c, attr; priority)
     end
     return
 end

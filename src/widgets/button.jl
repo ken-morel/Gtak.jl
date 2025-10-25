@@ -20,7 +20,7 @@ function mount!(b::Button, p::GtakComponent)
         b._widget.action_name = b.actionname
     end
     if isempty(b.children)
-        b._widget[] = b._label = GtkLabel(b.text)
+        b._widget[] = b._label = GtkLabel(resolve(String, b.text))
     else
         b._widget[] = mount!(b.children[1], b)
         if length(b.children) > 1

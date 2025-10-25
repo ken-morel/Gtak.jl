@@ -4,6 +4,7 @@ export KeyBox
     deps::Vector{<:AbstractReactive}
     builder::Function
     const box = SubParams()
+    _content::Components = Components()
 
     const innerbox::Box = Box(; box...)
 end
@@ -13,7 +14,7 @@ function IonicEfus.mount!(r::KeyBox, p::GtakComponent)
     r._parent = p
     callback = (_) -> dirty!(r, :deps)
     for dep in r.deps
-        catalyze!(callback, r.catalyst, dep)
+        catalyze!(callback, r._catalyst, dep)
     end
     rebuildcontent!(r)
     return r._widget
@@ -28,18 +29,19 @@ function IonicEfus.update!(r::KeyBox)
 end
 
 function rebuildcontent!(r::KeyBox)
+    unmount!.(r._content)
     empty!(r._widget)
-    for comp in @invokelatest r.builder()
+    r._content = @invokelatest r.builder()
+    for comp in r._content
         push!(r._widget, mount!(comp, r.innerbox))
     end
     return
 end
 
 function IonicEfus.unmount!(r::KeyBox)
+    unmount!.(r._content)
     unmount!(r.innerbox)
-
     denature!(r._catalyst)
-    empty!(r._cache)
     empty!(r._dirty)
     r._widget = nothing
     r._parent = nothing

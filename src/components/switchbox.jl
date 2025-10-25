@@ -10,6 +10,7 @@ const _SBCacheRow = Tuple{Any, Components, Vector{<:GtkWidget}}
 
     const innerbox = Box(; box...)
     const _cache = Set{_SBCacheRow}()
+    _content::Components = Components()
 end
 
 function IonicEfus.mount!(sb::SwitchBox, p::GtakComponent)
@@ -44,6 +45,8 @@ function updatecontent!(sb::SwitchBox)
         end
     end
     if isnothing(components) || rebuild
+        unmount!.(sb._content)
+        remount = true
         components = @invokelatest sb.builder(value)
     end
     if isnothing(widgets) || remount
@@ -52,10 +55,12 @@ function updatecontent!(sb::SwitchBox)
     empty!(sb._widget)
     !isempty(widgets) && push!(sb._widget, widgets...)
     !found && push!(sb._cache, _SBCacheRow((value, components, widgets)))
+    sb._content = components
     return
 end
 function IonicEfus.unmount!(sb::SwitchBox)
     unmount!(sb.innerbox)
+    unmount!.(sb._content)
 
     denature!(sb._catalyst)
     empty!(sb._cache)

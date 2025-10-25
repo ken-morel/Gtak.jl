@@ -4,8 +4,8 @@ const _RLCache = Tuple{Any, Components, Vector{<:GtkWidget}}
 @gtakcomponent ForBox <: GtakComponent begin
     items::MayBeReactive
     builder::Function
-    remount::Bool = false
-    rebuild::Bool = false
+    remount::MayBeReactive{Bool} = false
+    rebuild::MayBeReactive{Bool} = false
     const box = SubParams()
 
 
@@ -33,7 +33,10 @@ end
 function updatecontent!(l::ForBox)
     items = resolve(l.items)
     final = Vector{_RLCache}()
-    for item in items
+    rebuild = resolve(Bool, l.rebuild)
+    remount = resolve(Bool, l.remount)
+    println(" --- placing items ---")
+    @time for item in items
         cacherowidx = 0
         for (rowidx, (rowitem, _, rowwidgets)) in enumerate(l._cache)
             if rowitem === item
@@ -50,20 +53,25 @@ function updatecontent!(l::ForBox)
         if cacherowidx > 0
             item, components, widgets = popat!(l._cache, cacherowidx)
         end
-        if l.rebuild || isnothing(components)
+        println("Maybe building")
+        @time if rebuild || isnothing(components)
             components = @invokelatest l.builder(item)
         end
-        if l.remount || isnothing(widgets)
+        println("Mounting them")
+        @time if remount || isnothing(widgets)
             widgets = [mount!(c, l.innerbox) for c in components]
         end
-        for widget in widgets
+        println("placing widgets")
+        @time for widget in widgets
             if Gtk4.parent(widget) != l._widget
                 push!(l._widget, widget)
             end
         end
+        println("Pushing to list")
         push!(final, (item, components, widgets))
     end
-    while !isempty(l._cache)
+    println("Unmounting cache")
+    @time while !isempty(l._cache)
         c = pop!(l._cache)[2]
         unmount!.(c)
     end

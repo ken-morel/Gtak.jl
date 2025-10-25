@@ -10,7 +10,6 @@ macro gtakcomponent(name, block)
                 const _dirty = Set{Symbol}()
                 const _lock = ReentrantLock()
                 const _catalyst = Catalyst()
-                const lay = SubParams()
                 _parent::Union{GtakComponent, Nothing} = nothing
                 _widget::Union{GtkWidget, Nothing} = nothing
                 $(LineNumberNode(__source__.line, __source__.file))
