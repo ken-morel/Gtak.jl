@@ -33,7 +33,7 @@ const _gtak_common = Set(
         :css_classes, :css_name, :width_request, :height_request,
     ]
 )
-function _gtakwidgetupdatecommon(c, w, k, v)
+function _gtakwidgetupdatecommon(c::GtakComponent, w::GtkWidget, k::Symbol, v)
     return if k == :margin
         if length(v) == 1
             w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
@@ -57,7 +57,6 @@ function _gtakwidgetupdatecommon(c, w, k, v)
         end
     elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible, :width_request, :height_request])
         setproperty!(w, k, v)
-    elseif k == :tooltip
         w.tooltip_markup = v
     elseif k == :css_classes
         Gtk4.set_css_classes(w, v)
