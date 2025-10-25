@@ -6,15 +6,11 @@ struct Word
     text::String
 end
 
-words = @radical begin
-    [Word(word) for word in split(text', " ")]
-end
-
-@async 1 + 1
+words = @reactor [Word(word) for word in split(text', " ")]
 
 
 const Page = staticpage"""
-ForBox items=(words')::Vector
+For items=(words')::Vector
   builder(word)
     Label text=(word.text)
   end

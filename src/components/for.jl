@@ -41,7 +41,8 @@ function updatecontent!(l::For)
     end
 
     # Clear the innerbox to re-add widgets in the correct order
-    empty!(l.innerbox._widget)
+    #
+    widgetstoadd = GtkWidget[]
 
     final_cache = Vector{_RLCache}()
 
@@ -74,15 +75,19 @@ function updatecontent!(l::For)
 
         # Add widgets to the innerbox in the correct order
         for widget in widgets
-            push!(l.innerbox._widget, widget)
+            push!(widgetstoadd, widget)
         end
         push!(final_cache, (item, components, widgets))
     end
+
 
     # Unmount components that are no longer in the new_items list
     for (_, (components, _)) in old_cache_map
         unmount!.(components)
     end
+
+    empty!(l.innerbox._widget)
+    !isempty(widgetstoadd) && push!(l.innerbox._widget, widgetstoadd...)
 
     l._cache = final_cache
     return

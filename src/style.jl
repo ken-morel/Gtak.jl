@@ -1,6 +1,6 @@
 export StyleManager
 
-@kwarg mutable struct Stylesheet
+Base.@kwdef mutable struct Stylesheet
     file::Union{String, Nothing} = nothing
     css::Union{String, Nothing} = nothing
     _provider::Union{GtkCssProvider, Nothing} = nothing
@@ -18,6 +18,7 @@ function mount!(sm::StyleManager)
             read(sm.css_file, String)
         catch e
             @error "Failed to load CSS from file: $(sm.css_file)" exception = e
+            return
         end
     elseif !isnothing(sm.css_data)
         sm.css_data

@@ -33,7 +33,7 @@ const _gtak_common = Set(
         :css_classes, :css_name, :width_request, :height_request,
     ]
 )
-function _gtakwidgetupdatecommon(c::GtakComponent, w::GtkWidget, k::Symbol, v)
+function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: GtakComponent}
     return if k == :margin
         if length(v) == 1
             w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
@@ -101,8 +101,8 @@ end
 update!(c::GtakComponent) = _updates(identity, c)
 function _gtakwidgetmountcommon!(c, donttrack::Vector)
     @assert !isnothing(c._widget)
-    for param in params(c)
-        dirty!(c, param)
+    for (name,) in params(c)
+        dirty!(c, name)
     end
     update!(c)
     @assert !isnothing(c._widget)
@@ -112,12 +112,12 @@ function _gtakwidgetmountcommon!(c, donttrack::Vector)
 end
 function _trackreactiveattributes(c::GtakComponent, skip::Vector = [])
     toskip = Set(skip)
-    for attr in params(c)
-        attr in toskip && continue
-        val = getfield(c, attr)
+    for (name,) in params(c)
+        name in toskip && continue
+        val = getfield(c, name)
         if val isa AbstractReactive
             catalyze!(c._catalyst, val) do _
-                dirty!(c, attr)
+                dirty!(c, name)
             end
         end
     end

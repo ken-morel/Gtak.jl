@@ -6,7 +6,7 @@ export Video
     loop::Union{MayBeReactive{Bool}, Nothing} = nothing
 end
 
-function mount!(v::Video, p::GtakComponent)
+function mount!(v::GtkVideo, p::GtakComponent)
     v._parent = p
     v._widget = GtkVideo()
     _gtakwidgetmountcommon!(v, [])
@@ -14,9 +14,9 @@ function mount!(v::Video, p::GtakComponent)
 end
 
 function update!(v::Video)
-    _updates(v) do dirt
+    return _updates(v) do dirt
         if dirt == :file && !isnothing(v.file)
-            v._widget.file = GFile(resolve(String, v.file))
+            v._widget.file = Gtk4.Glib.GFile(resolve(String, v.file))
         elseif dirt == :autoplay && !isnothing(v.autoplay)
             v._widget.autoplay = resolve(Bool, v.autoplay)
         elseif dirt == :loop && !isnothing(v.loop)
