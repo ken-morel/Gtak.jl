@@ -30,11 +30,13 @@ end
 
 function rebuildcontent!(r::Keyed)
     unmount!.(r._content)
-    empty!(r._widget)
     r._content = @invokelatest r.builder()
+    content = []
     for comp in r._content
-        push!(r._widget, mount!(comp, r.innerbox))
+        push!(content, mount!(comp, r.innerbox))
     end
+    empty!(r._widget)
+    !isempty(content) && push!(r._widget, content...)
     return
 end
 

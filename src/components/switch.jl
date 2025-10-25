@@ -38,11 +38,6 @@ function updatecontent!(sb::Switch)
     components = widgets = nothing
     found = false
 
-    # Detach current widgets from the container
-    for child_comp in sb._content
-        widget = child_comp._widget
-        !isnothing(widget) && Gtk4.remove!(sb.innerbox._widget, widget)
-    end
 
     for row in sb._cache
         if row[1] == value
@@ -61,6 +56,7 @@ function updatecontent!(sb::Switch)
         widgets = [mount!(c, sb.innerbox) for c in components]
     end
 
+    empty!(sb.innerbox._widget)
     !isempty(widgets) && push!(sb.innerbox._widget, widgets...)
     !found && push!(sb._cache, _SBCacheRow((value, components, widgets)))
     sb._content = components

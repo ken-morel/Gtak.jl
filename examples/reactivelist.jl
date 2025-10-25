@@ -14,7 +14,7 @@ For items=(words')::Vector
   builder(word)
     Label text=(word.text)
   end
-Entry text=text # onchange here! not a reactant!
+Entry text=text
 """
 
 (@main)(_) = application("com.example") do app

@@ -73,7 +73,6 @@ function updatecontent!(l::For)
             widgets = [mount!(c, l.innerbox) for c in components]
         end
 
-        # Add widgets to the innerbox in the correct order
         for widget in widgets
             push!(widgetstoadd, widget)
         end

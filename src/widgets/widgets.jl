@@ -150,6 +150,7 @@ include("./video.jl")
 @generated getparent(c::GtakComponent) = hasfield(c, :_parent) ? :(c._parent) : nothing
 @generated getchildren(p::GtakComponent) = hasfield(p, :children) ? :(p.children) : nothing
 @generated isdirty(c::GtakComponent) = hasfield(c, :_dirty) ? :(!isempty(c._dirty)) : :false
+
 ismounted(c::GtakComponent) = !isnothing(c._widget)
 
 function getpage(c::GtakComponent)

@@ -17,12 +17,12 @@ end
         staticpage"""
         Label text=("Notebook of $(ITEM')s")::String
         Frame
-          ForBox items=ITEMS box:orient=O_H
+          For items=ITEMS box:orient=O_H
             builder(item)
               Button text=item onclick=(() -> ITEM' = item)
             end
           Separator
-          SwitchBox value=ITEM
+          Switch value=ITEM
             builder(item)
               Label text="This will be built only once"
               (println("Building for $item");)
