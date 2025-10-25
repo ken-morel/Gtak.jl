@@ -1,6 +1,6 @@
-export KeyBox
+export Keyed
 
-@gtakcomponent KeyBox <: GtakComponent begin
+@gtakcomponent Keyed <: GtakComponent begin
     deps::Vector{<:AbstractReactive}
     builder::Function
     const box = SubParams()
@@ -9,7 +9,7 @@ export KeyBox
     const innerbox::Box = Box(; box...)
 end
 
-function IonicEfus.mount!(r::KeyBox, p::GtakComponent)
+function IonicEfus.mount!(r::Keyed, p::GtakComponent)
     r._widget = mount!(r.innerbox, r)
     r._parent = p
     callback = (_) -> dirty!(r, :deps)
@@ -20,7 +20,7 @@ function IonicEfus.mount!(r::KeyBox, p::GtakComponent)
     return r._widget
 end
 
-function IonicEfus.update!(r::KeyBox)
+function IonicEfus.update!(r::Keyed)
     return _updates(r) do key
         if key == :deps
             rebuildcontent!(r)
@@ -28,7 +28,7 @@ function IonicEfus.update!(r::KeyBox)
     end
 end
 
-function rebuildcontent!(r::KeyBox)
+function rebuildcontent!(r::Keyed)
     unmount!.(r._content)
     empty!(r._widget)
     r._content = @invokelatest r.builder()
@@ -38,7 +38,7 @@ function rebuildcontent!(r::KeyBox)
     return
 end
 
-function IonicEfus.unmount!(r::KeyBox)
+function IonicEfus.unmount!(r::Keyed)
     unmount!.(r._content)
     unmount!(r.innerbox)
     denature!(r._catalyst)

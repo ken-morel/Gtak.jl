@@ -1,7 +1,7 @@
-export ForBox
+export For
 const _RLCache = Tuple{Any, Components, Vector{<:GtkWidget}}
 
-@gtakcomponent ForBox <: GtakComponent begin
+@gtakcomponent For <: GtakComponent begin
     items::MayBeReactive
     builder::Function
     remount::MayBeReactive{Bool} = false
@@ -13,7 +13,7 @@ const _RLCache = Tuple{Any, Components, Vector{<:GtkWidget}}
     _cache::Vector{_RLCache} = []
 end
 
-function IonicEfus.mount!(l::ForBox, p::GtakComponent)
+function IonicEfus.mount!(l::For, p::GtakComponent)
     l._parent = p
     l.items isa AbstractReactive && catalyze!(l._catalyst, l.items) do _
         dirty!(l, :items)
@@ -22,7 +22,7 @@ function IonicEfus.mount!(l::ForBox, p::GtakComponent)
     updatecontent!(l)
     return l._widget
 end
-function IonicEfus.update!(l::ForBox)
+function IonicEfus.update!(l::For)
     return _updates(l) do key
         if key == :items
             updatecontent!(l)
@@ -30,7 +30,7 @@ function IonicEfus.update!(l::ForBox)
     end
 end
 
-function updatecontent!(l::ForBox)
+function updatecontent!(l::For)
     items = resolve(l.items)
     final = Vector{_RLCache}()
     rebuild = resolve(Bool, l.rebuild)
@@ -78,7 +78,7 @@ function updatecontent!(l::ForBox)
     append!(l._cache, final)
     return
 end
-function IonicEfus.unmount!(l::ForBox)
+function IonicEfus.unmount!(l::For)
     unmount!(l.innerbox)
     denature!(l._catalyst)
     empty!(l._cache)
