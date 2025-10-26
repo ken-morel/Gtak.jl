@@ -51,7 +51,6 @@ function updatecontent!(l::For)
         widgets = nothing
 
         if haskey(old_cache_map, item)
-            # Item exists in old cache, try to reuse
             (cached_components, cached_widgets) = pop!(old_cache_map, item)
             components = cached_components
             widgets = cached_widgets

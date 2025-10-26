@@ -1,43 +1,48 @@
-export StyleManager
+export Stylesheet, @stylesheet_str
+
+export Stylesheet, @stylesheet_str
+
+import Gtk4: GtkCssProvider
 
 Base.@kwdef mutable struct Stylesheet
     file::Union{String, Nothing} = nothing
     css::Union{String, Nothing} = nothing
     _provider::Union{GtkCssProvider, Nothing} = nothing
+    _display::Union{Gtk4.GdkDisplay, Nothing} = nothing
 end
 
-function mount!(sm::StyleManager)
-    display = Gdk4.GdkDisplay.get_default()
-    if isnothing(display)
-        @warn "Could not get default GdkDisplay. CSS styles will not be applied."
-        return
-    end
+macro stylesheet_str(code::String)
+    return Stylesheet(css = code)
+end
 
-    css_code = if !isnothing(sm.css)
+function mount!(sm::Stylesheet, win::GtkWindow)
+
+    display = Gtk4.display(win)
+
+    css_code = if !isnothing(sm.file)
         try
-            read(sm.css_file, String)
+            read(sm.file, String)
         catch e
-            @error "Failed to load CSS from file: $(sm.css_file)" exception = e
+            @error "Failed to load CSS from file: $(sm.file)" exception = e
             return
         end
-    elseif !isnothing(sm.css_data)
-        sm.css_data
+    elseif !isnothing(sm.css)
+        sm.css
     end
 
-    return if !isnothing(css_code)
+    if !isnothing(css_code)
         provider = GtkCssProvider()
-        load_from_data(provider, css_to_load)
-        add_provider_for_display(display, provider, 800) # GTK_STYLE_PROVIDER_PRIORITY_USER
-        sm._css_provider = provider
+        Gtk4.load_from_data(provider, css_code)
+        Gtk4.add_provider_for_display(display, provider, 800) # GTK_STYLE_PROVIDER_PRIORITY_USER
+        sm._provider = provider
+        sm._display = display
     end
 end
 
-function unmount!(sm::StyleManager)
-    return if !isnothing(sm._css_provider)
-        display = Gdk4.GdkDisplay.get_default()
-        if !isnothing(display)
-            remove_provider_for_display(display, sm._css_provider)
-        end
-        sm._css_provider = nothing
+function unmount!(sm::Stylesheet)
+    if !isnothing(sm._provider) && !isnothing(sm._display)
+        Gtk4.remove_provider_for_display(sm._display, sm._provider)
+        sm._provider = nothing
+        sm._display = nothing
     end
 end

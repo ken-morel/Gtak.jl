@@ -2,8 +2,8 @@ function LoginContent(onmount)
     name = Reactant("")
     password = Reactant("")
     error = Reactant("")
-    # Happens before everything else
-    @radical   error' = "" [name, password]
+    # Reset the error when name or password change
+    @radical error' = "" [name, password]
     data = nothing
     stores = nothing
     context = nothing
@@ -12,8 +12,8 @@ function LoginContent(onmount)
         data = getdata(ctx)
         context = ctx
     end
-    @ionic function signup()
-        user = User(; name = name', password = password')
+    function signup()
+        user = @ionic User(; name = name', password = password')
         data[:user] = user
         alter!(stores[:users]) do users
             push!(users, user)
@@ -22,6 +22,7 @@ function LoginContent(onmount)
         return
     end
     @ionic function signin()
+        # atak.jl stores also support getvalue and setvalue!
         for user in stores[:users]'
             if user.name == name'
                 if user.password == password'
@@ -47,7 +48,7 @@ function LoginContent(onmount)
           Entry text=name margin=(0,0,0,25) lay:pos=(1,2)
           Label text="Your password: " lay:pos=(2,1)
           Entry text=password margin=(0,0,0,25) lay:pos=(2,2)
-        KeyBox deps=[error]
+        Keyed deps=[error]
           builder()
             if error' != ""
               Label text="<b>ERROR:</b> $(error')"

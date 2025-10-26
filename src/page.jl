@@ -23,6 +23,8 @@ structures.
 """
 abstract type AbstractPage <: GtakComponent end
 
+getstylesheet(p::AbstractPage) = p.style
+
 
 """
     mutable struct StaticPage <: AbstractPage
@@ -33,18 +35,24 @@ tree.
 
 See also [`onmount!`](@ref), [`ReloadablePage`](@ref).
 """
-mutable struct StaticPage <: AbstractPage
-    content::Components
-    onmount::Union{Function, Nothing}
-    onunmount::Union{Function, Nothing}
-    context::Union{PageContext, Nothing}
+Base.@kwdef mutable struct StaticPage <: AbstractPage
+    content::Components = Components()
+    onmount::Union{Function, Nothing} = nothing
+    onunmount::Union{Function, Nothing} = nothing
+    context::Union{PageContext, Nothing} = nothing
+    style::Union{Stylesheet, Nothing} = nothing
     """
-        StaticPage(c::Components)
+        StaticPage(
+            content::Components = Components();
+            onmount::Union{Function, Nothing} = nothing,
+            onunmount::Union{Function, Nothing} = nothing,
+            context::Union{PageContext, Nothing} = nothing,
+            style::Union{Stylesheet, Nothing} = nothing,
+        )
 
     Creates a static page with the specified
     component tree.
     """
-    StaticPage(c::Components) = new(c, nothing, nothing, nothing)
 end
 
 """
@@ -54,7 +62,7 @@ A default reload implementation
 for gtak pages, it simply does
 nothing.
 """
-reload!(s::AbstractPage) = s
+reload!(s::StaticPage) = s
 
 """
     const PageBuilderFunction = FunctionWrapper{Components, Tuple{Function}}
@@ -67,44 +75,58 @@ to be called when the component is mounted.
 const PageBuilderFunction = FunctionWrapper{Components, Tuple{Function}}
 
 """
-    mutable struct ReloadablePage <: AbstractPage
+    Base.@kwdef mutable struct ReloadablePage <: AbstractPage
 
 Holds a component tree whose content can
 be rebuilt via the contained builder
 via the [`reload!`](@ref) method.
 """
-mutable struct ReloadablePage <: AbstractPage
+Base.@kwdef mutable struct ReloadablePage <: AbstractPage
     const builder::PageBuilderFunction
     content::Components
     onmount::Union{Function, Nothing}
     onunmount::Union{Function, Nothing}
     context::Union{PageContext, Nothing}
+    style::Union{Stylesheet, Nothing} = nothing
 
     """
-        ReloadablePage(builder::Function)
-        ReloadablePage(builder::PageBuilderFunction)
+        ReloadablePage(builder::Function; kw...)
+        ReloadablePage(
+            builder::PageBuilderFunction;
+            content::Union{Components, Nothing} = nothing,
+            onmount::Union{Function, Nothing} = nothing,
+            onunmount::Union{Function, Nothing} = nothing,
+            style::Union{Stylesheet, Nothing} = nothing
+        )
 
     Creates a reloadable page with the specified
     function, the function is a no-argument
     closure which returns a list of components.
     """
     function ReloadablePage(
-            builder::PageBuilderFunction,
+            builder::PageBuilderFunction;
+            content::Union{Components, Nothing} = nothing,
+            onmount::Union{Function, Nothing} = nothing,
+            onunmount::Union{Function, Nothing} = nothing,
+            style::Union{Stylesheet, Nothing} = nothing
         )
         page = new(
             builder,
             Components(),
-            nothing,
-            nothing,
-            nothing,
+            onmount,
+            onunmount,
+            content,
+            style,
         )
-        page.content = builder((cb::Function) -> onmount!(cb, page))
+        if isnothing(page.content)
+            page.content = @invokelatest builder((cb::Function) -> onmount!(cb, page))
+        end
         return page
     end
 end
 ReloadablePage(
-    builder::Function,
-) = ReloadablePage(PageBuilderFunction(builder))
+    builder::Function; kw...
+) = ReloadablePage(PageBuilderFunction(builder), kw...)
 
 
 """
@@ -143,9 +165,7 @@ rebuilds the page.
 """
 function reload!(p::ReloadablePage)
     unmount!(p)
-    p.content = p.builder() do cb
-        onmount!(cb, p)
-    end
+    p.content = @invokelatest p.builder(cb -> onmount!(cb, p))
     return p
 end
 
@@ -157,7 +177,6 @@ A page builder creates or builds pages.
 """
 const PageBuilder = FunctionWrapper{AbstractPage, Tuple{}}
 
-
 """
     IonicEfus.mount!(p::AbstractPage, scheduler::Scheduler)
 
@@ -166,9 +185,10 @@ the scheduler for ui updates.
 """
 function IonicEfus.mount!(p::AbstractPage, ctx::Union{PageContext, Nothing} = nothing)
     p.context = ctx
+
     contents = mount!.(p.content, (p,))
     unmounter = if !isnothing(p.onmount)
-        p.onmount(p, ctx)
+        @invokelatest p.onmount(p, ctx)
     end
     if unmounter isa Function
         onunmount!(unmounter, p)
@@ -182,7 +202,7 @@ remount!(::AbstractPage) = error("Remounting pages is unsupported")
 "Unmount the page"
 function unmount!(p::AbstractPage)
     if p.onunmount isa Function
-        p.onunmount(p)
+        @invokelatest p.onunmount(p)
     end
     foreach(unmount!, p.content)
     p.context = nothing

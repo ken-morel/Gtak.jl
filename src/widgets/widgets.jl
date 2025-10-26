@@ -16,8 +16,8 @@ macro gtakwidgetcomponent(name::Symbol, block)
                 sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
                 tooltip::Union{MayBeReactive{String}, Nothing} = nothing
                 visible::Union{MayBeReactive{Bool}, Nothing} = nothing
-                css_classes::Union{MayBeReactive{Vector{String}}, Nothing} = nothing
-                css_name::Union{MayBeReactive{String}, Nothing} = nothing
+                cssclasses::Union{MayBeReactive{Vector{String}}, Nothing} = nothing
+                cssname::Union{MayBeReactive{String}, Nothing} = nothing
                 width_request::Union{MayBeReactive{Int}, Nothing} = nothing
                 height_request::Union{MayBeReactive{Int}, Nothing} = nothing
                 lay::SubParams = SubParams()
@@ -30,7 +30,7 @@ end
 const _gtak_common = Set(
     [
         :opacity, :margin, :align, :expand, :canfocus, :hasfocus, :cursor, :sensitive, :tooltip, :visible,
-        :css_classes, :css_name, :width_request, :height_request,
+        :classes, :cssname, :width_request, :height_request,
     ]
 )
 function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: GtakComponent}
@@ -58,9 +58,9 @@ function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: G
     elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible, :width_request, :height_request])
         setproperty!(w, k, v)
         w.tooltip_markup = v
-    elseif k == :css_classes
+    elseif k == :cssclasses
         Gtk4.set_css_classes(w, v)
-    elseif k == :css_name
+    elseif k == :cssname
         w.name = v
     elseif k == :hasfocus
         if v

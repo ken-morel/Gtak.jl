@@ -16,11 +16,11 @@ function HomeContent(onmount::Function)
     end
     return efus"""
     Label text=(
-      "<big>Hello $(username')</big>, here are your collections"
+      "<big>Hello $(username')</big>, here are your todos"
     )::String margin=10
     Separator
     VBox margin=20
-      ForBox items=todos box:spacing=10
+      For items=todos box:spacing=10
         builder(todo)
             Frame box:orient=O_H
               Label text=(todo.text) margin=15
@@ -37,7 +37,7 @@ function HomeContent(onmount::Function)
       Entry text=colentry
       Button text="Add" onclick=(() -> begin
         push!(todos', Todo(;userid=user.id, text=colentry'))
-        IonicEfus.notify(todos)
+        notify(todos)
         colentry' = ""
       end)
     """

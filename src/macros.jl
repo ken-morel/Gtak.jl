@@ -1,12 +1,14 @@
 export @staticpage_str, @builder_str
 
-macro staticpage_str(code::AbstractString)
+macro staticpage_str(code::AbstractString, style = nothing)
 
     gen = generate(IonicEfus.parse_efus(code, "<staticpage macro at $(__source__.file):$(__source__.line)"))
-    return quote
-        $(LineNumberNode(__source__.line, __source__.file))
-        $StaticPage($(esc(gen)))
-    end
+    return esc(
+        quote
+            $(LineNumberNode(__source__.line, __source__.file))
+            $StaticPage(content = $gen, style = $(Symbol(style)))
+        end
+    )
 end
 macro reloadablepage(code::AbstractString, cb = nothing)
     gen = IonicEfus.parse_efus(

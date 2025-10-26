@@ -4,20 +4,22 @@ const KEYS = [
     ["4", "5", "6", "-"],
     ["7", "8", "9", "*"],
     ["(", "0", ")", "/"],
+    ["//", "^", "&", "|"],
+    ["\\", "%", "~", "."],
 ]
 const TEXT = Reactant("")
 
-const answer = @radical try
+const answer = @reactor try # Lazily evaluated, let's not disturb user's input
     string(eval(Meta.parse(TEXT')))
 catch e
-    summary(e)
-end
+    "<b>" * summary(e) * "</b>"
+end::String
 
 (@main)(_) = Gtak.spa() do _, _
     staticpage"""
     Entry text=TEXT
-    Label text=(answer')::String
-    Grid spacing=(5, 5)
+    Label text=answer
+    Grid spacing=(5, 5) expand=true
       for (y, row) in enumerate(KEYS)
         for (x, key) in enumerate(row)
           Button text=key onclick=(() -> TEXT' = TEXT' * key) lay:pos=(y, x)
