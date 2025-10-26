@@ -63,7 +63,7 @@ function Base.show(w::Window, p::AbstractPage)
     if !isnothing(lastpage)
         unmount!(lastpage)
         style = getstylesheet(lastpage)
-        !isnothing(style) && unmount!(style, w.window)
+        !isnothing(style) && unmount!(style)
     end
     style = getstylesheet(p)
 

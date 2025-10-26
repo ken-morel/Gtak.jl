@@ -15,7 +15,7 @@ macro stylesheet_str(code::String)
     return Stylesheet(css = code)
 end
 
-function mount!(sm::Stylesheet, win::GtkWindow)
+function mount!(sm::Stylesheet, win::GtkWidget)
 
     display = Gtk4.display(win)
 
@@ -30,7 +30,7 @@ function mount!(sm::Stylesheet, win::GtkWindow)
         sm.css
     end
 
-    if !isnothing(css_code)
+    return if !isnothing(css_code)
         provider = GtkCssProvider(css_code)
         push!(display, provider, 800) # GTK_STYLE_PROVIDER_PRIORITY_USER
         sm._provider = provider
@@ -39,7 +39,7 @@ function mount!(sm::Stylesheet, win::GtkWindow)
 end
 
 function unmount!(sm::Stylesheet)
-    if !isnothing(sm._provider) && !isnothing(sm._display)
+    return if !isnothing(sm._provider) && !isnothing(sm._display)
         delete!(sm._display, sm._provider)
         sm._provider = nothing
         sm._display = nothing
