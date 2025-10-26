@@ -27,7 +27,7 @@ getstylesheet(p::AbstractPage) = p.style
 
 
 """
-    mutable struct StaticPage <: AbstractPage
+    Base.@kwdef mutable struct StaticPage <: AbstractPage
 
 A static page is a page instance which
 holds a static or non-reloadable component
@@ -40,20 +40,22 @@ Base.@kwdef mutable struct StaticPage <: AbstractPage
     onmount::Union{Function, Nothing} = nothing
     onunmount::Union{Function, Nothing} = nothing
     context::Union{PageContext, Nothing} = nothing
-    style::Union{Stylesheet, Nothing} = nothing
+    stylesheet::Union{Stylesheet, Nothing} = nothing
     """
+        StaticPage(content::Components;kw...)
         StaticPage(
-            content::Components = Components();
+            content::Components = Components(),
             onmount::Union{Function, Nothing} = nothing,
             onunmount::Union{Function, Nothing} = nothing,
             context::Union{PageContext, Nothing} = nothing,
-            style::Union{Stylesheet, Nothing} = nothing,
+            stylesheet::Union{Stylesheet, Nothing} = nothing,
         )
 
     Creates a static page with the specified
     component tree.
     """
 end
+StaticPage(content::Components; kw...) = StaticPage(; content, kw...)
 
 """
     reload!(s::AbstractPage) = s
@@ -87,7 +89,7 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
     onmount::Union{Function, Nothing}
     onunmount::Union{Function, Nothing}
     context::Union{PageContext, Nothing}
-    style::Union{Stylesheet, Nothing} = nothing
+    stylesheet::Union{Stylesheet, Nothing} = nothing
 
     """
         ReloadablePage(builder::Function; kw...)
@@ -96,7 +98,7 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
             content::Union{Components, Nothing} = nothing,
             onmount::Union{Function, Nothing} = nothing,
             onunmount::Union{Function, Nothing} = nothing,
-            style::Union{Stylesheet, Nothing} = nothing
+            stylesheet::Union{Stylesheet, Nothing} = nothing
         )
 
     Creates a reloadable page with the specified
@@ -108,7 +110,7 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
             content::Union{Components, Nothing} = nothing,
             onmount::Union{Function, Nothing} = nothing,
             onunmount::Union{Function, Nothing} = nothing,
-            style::Union{Stylesheet, Nothing} = nothing
+            stylesheet::Union{Stylesheet, Nothing} = nothing
         )
         page = new(
             builder,
@@ -116,7 +118,7 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
             onmount,
             onunmount,
             content,
-            style,
+            stylesheet,
         )
         if isnothing(page.content)
             page.content = @invokelatest builder((cb::Function) -> onmount!(cb, page))
@@ -178,7 +180,7 @@ A page builder creates or builds pages.
 const PageBuilder = FunctionWrapper{AbstractPage, Tuple{}}
 
 """
-    IonicEfus.mount!(p::AbstractPage, scheduler::Scheduler)
+    mount!(p::AbstractPage, scheduler::Scheduler)
 
 Mount the specified page, and bind it to
 the scheduler for ui updates.

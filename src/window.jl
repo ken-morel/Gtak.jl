@@ -15,6 +15,7 @@ Base.@kwdef mutable struct Window <: AbstractGtakWindow
     scheduler::Scheduler = Scheduler()
     router::Router = Router()
     title::String = "Gtak Window"
+    stylesheet::Union{Stylesheet, Nothing} = nothing
     window::Union{GtkWindow, Nothing} = nothing
     app::Union{AbstractGtakApplication, Nothing} = nothing
     current_page::Union{AbstractPage, Nothing} = nothing
@@ -62,14 +63,12 @@ function Base.show(w::Window, p::AbstractPage)
 
     if !isnothing(lastpage)
         unmount!(lastpage)
-        style = getstylesheet(lastpage)
-        !isnothing(style) && unmount!(style)
+        stylesheet = getstylesheet(lastpage)
+        !isnothing(stylesheet) && unmount!(stylesheet)
     end
-    style = getstylesheet(p)
-
-    !isnothing(style) && mount!(style, w.window)
-
     empty!(w._box) # Just in case
+    stylesheet = getstylesheet(p)
+    !isnothing(stylesheet) && unmount!(stylesheet)
     !isempty(widgets) && push!(w._box, widgets...)
     return widgets
 end

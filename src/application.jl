@@ -12,6 +12,7 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     app::Union{GtkApplication, Nothing} = nothing
     stores::Dict{Symbol, Atak.AbstractStoreNode} = Dict()
     data::Dict{Symbol, Any} = Dict()
+    stylesheet::Union{Stylesheet, Nothing} = nothing
 end
 
 configdirs(a::Application) = joinpath.(BaseDirs.config(), (a.id,))
@@ -68,6 +69,12 @@ signal to mount it's windows when
 function IonicEfus.mount!(app::Application)::GtkApplication
     app.app = GtkApplication(app.id)
     signal_connect(app.app, :activate) do _
+        if !isnothing(app.stylesheet)
+            win = first(app.windows).window
+            if !isnothing(win)
+                mount!(app.stylesheet, Gtk4.display(win))
+            end
+        end
         mount!.(app.windows, (app,))
     end
     return app.app
@@ -80,6 +87,9 @@ Unmount the app windows(See [`IonicEfus.unmount!(::Window)`](@ref))
 and destroy the app.
 """
 function IonicEfus.unmount!(app::Application)
+    if !isnothing(app.stylesheet)
+        unmount!(app.stylesheet)
+    end
     unmount!.(app.windows)
     if !isnothing(app.app)
         destroy(app.app)

@@ -1,12 +1,12 @@
 export @staticpage_str, @builder_str
 
-macro staticpage_str(code::AbstractString, style = nothing)
+macro staticpage_str(code::AbstractString, stylesheet = nothing)
 
     gen = generate(IonicEfus.parse_efus(code, "<staticpage macro at $(__source__.file):$(__source__.line)"))
     return esc(
         quote
             $(LineNumberNode(__source__.line, __source__.file))
-            $StaticPage(content = $gen, style = $(Symbol(style)))
+            $StaticPage(content = $gen, stylesheet = $(Symbol(stylesheet)))
         end
     )
 end

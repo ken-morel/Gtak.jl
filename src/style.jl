@@ -15,27 +15,25 @@ macro stylesheet_str(code::String)
     return Stylesheet(css = code)
 end
 
-function mount!(sm::Stylesheet, win::GtkWidget)
-
-    display = Gtk4.display(win)
-
+function mount!(sm::Stylesheet, display::Gtk4.GdkDisplay)
     css_code = if !isnothing(sm.file)
         try
             read(sm.file, String)
         catch e
             @error "Failed to load CSS from file: $(sm.file)" exception = e
-            return
+            ""
         end
     elseif !isnothing(sm.css)
         sm.css
     end
 
-    return if !isnothing(css_code)
+    if !isnothing(css_code)
         provider = GtkCssProvider(css_code)
         push!(display, provider, 800) # GTK_STYLE_PROVIDER_PRIORITY_USER
         sm._provider = provider
         sm._display = display
     end
+    return sm._provider
 end
 
 function unmount!(sm::Stylesheet)
