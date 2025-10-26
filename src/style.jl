@@ -31,9 +31,8 @@ function mount!(sm::Stylesheet, win::GtkWindow)
     end
 
     if !isnothing(css_code)
-        provider = GtkCssProvider()
-        Gtk4.load_from_data(provider, css_code)
-        Gtk4.add_provider_for_display(display, provider, 800) # GTK_STYLE_PROVIDER_PRIORITY_USER
+        provider = GtkCssProvider(css_code)
+        push!(display, provider, 800) # GTK_STYLE_PROVIDER_PRIORITY_USER
         sm._provider = provider
         sm._display = display
     end
@@ -41,7 +40,7 @@ end
 
 function unmount!(sm::Stylesheet)
     if !isnothing(sm._provider) && !isnothing(sm._display)
-        Gtk4.remove_provider_for_display(sm._display, sm._provider)
+        delete!(sm._display, sm._provider)
         sm._provider = nothing
         sm._display = nothing
     end
