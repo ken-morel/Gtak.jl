@@ -1,7 +1,7 @@
-createapplication() = application("com.example.tod") do app
+createapplication() = application("com.example.tod", stylesheet=todstyle) do app
     setupstores!(app)
     app.data[:user] = nothing
-    window(app; title = "Gtak application", stylesheet = TODSTYLE) do _
+    window(app; title = "Gtak Todolist") do _
         Pages.Login
     end
 end

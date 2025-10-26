@@ -85,7 +85,7 @@ via the [`reload!`](@ref) method.
 """
 Base.@kwdef mutable struct ReloadablePage <: AbstractPage
     const builder::PageBuilderFunction
-    content::Components
+    content::Union{Components, Nothing}
     onmount::Union{Function, Nothing}
     onunmount::Union{Function, Nothing}
     context::Union{PageContext, Nothing}
@@ -114,12 +114,13 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
         )
         page = new(
             builder,
-            Components(),
+            content,
             onmount,
             onunmount,
             content,
             stylesheet,
         )
+
         if isnothing(page.content)
             page.content = @invokelatest builder((cb::Function) -> onmount!(cb, page))
         end
@@ -128,7 +129,7 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
 end
 ReloadablePage(
     builder::Function; kw...
-) = ReloadablePage(PageBuilderFunction(builder), kw...)
+) = ReloadablePage(PageBuilderFunction(builder); kw...)
 
 
 """

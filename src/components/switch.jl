@@ -1,7 +1,7 @@
-export Switch
+export Switched
 
 const _SBCacheRow = Tuple{Any, Components, Vector{<:GtkWidget}}
-@gtakcomponent Switch <: GtakComponent begin
+@gtakcomponent Switched <: GtakComponent begin
     value::AbstractReactive
     builder::Function
     rebuild::MayBeReactive{Bool} = false
@@ -13,7 +13,7 @@ const _SBCacheRow = Tuple{Any, Components, Vector{<:GtkWidget}}
     _content::Components = Components()
 end
 
-function IonicEfus.mount!(sb::Switch, p::GtakComponent)
+function IonicEfus.mount!(sb::Switched, p::GtakComponent)
     sb._parent = p
     sb._widget = mount!(sb.innerbox, sb)
     catalyze!(sb._catalyst, sb.value) do _
@@ -23,7 +23,7 @@ function IonicEfus.mount!(sb::Switch, p::GtakComponent)
     return sb._widget
 end
 
-function IonicEfus.update!(sb::Switch)
+function IonicEfus.update!(sb::Switched)
     return _updates(sb) do key
         if key == :value
             updatecontent!(sb)
@@ -31,7 +31,7 @@ function IonicEfus.update!(sb::Switch)
     end
 end
 
-function updatecontent!(sb::Switch)
+function updatecontent!(sb::Switched)
     value = getvalue(sb.value)
     rebuild = resolve(Bool, sb.rebuild)
     remount = resolve(Bool, sb.remount)
@@ -62,7 +62,7 @@ function updatecontent!(sb::Switch)
     sb._content = components
     return
 end
-function IonicEfus.unmount!(sb::Switch)
+function IonicEfus.unmount!(sb::Switched)
     unmount!(sb.innerbox)
     unmount!.(sb._content)
 

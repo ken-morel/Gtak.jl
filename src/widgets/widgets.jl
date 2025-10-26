@@ -8,7 +8,7 @@ macro gtakwidgetcomponent(name::Symbol, block)
             @gtakcomponent $name <: GtakWidgetComponent  begin
                 opacity::Union{MayBeReactive{Float64}, Nothing} = nothing
                 margin::Union{MayBeReactive{Union{Int, NTuple{2, Int}, NTuple{4, Int}}}, Nothing} = nothing
-                align::Union{MayBeReactive{NTuple{2, Gtk4.Align}}, Nothing} = nothing
+                align::Union{MayBeReactive{<:Union{<:NTuple{2, Union{Gtk4.Align, Nothing}}, Gtk4.Align}}, Nothing} = nothing
                 expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
                 canfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
                 hasfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
@@ -30,7 +30,7 @@ end
 const _gtak_common = Set(
     [
         :opacity, :margin, :align, :expand, :canfocus, :hasfocus, :cursor, :sensitive, :tooltip, :visible,
-        :classes, :cssname, :width_request, :height_request,
+        :cssclasses, :cssname, :width_request, :height_request,
     ]
 )
 function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: GtakComponent}
@@ -46,7 +46,13 @@ function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: G
             @warn "Component of type $C Invalid margin $v"
         end
     elseif k == :align
-        w.valign, w.halign = v
+        if v isa Tuple
+            v, h = v
+            isnothing(v) || setproperty!(w, :valign, v)
+            isnothing(h) || setproperty!(w, :halign, h)
+        else
+            w.valign = w.halign = v
+        end
     elseif k == :expand
         if length(v) == 1
             w.hexpand = w.vexpand = v
@@ -59,9 +65,9 @@ function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: G
         setproperty!(w, k, v)
         w.tooltip_markup = v
     elseif k == :cssclasses
-        Gtk4.set_css_classes(w, v)
+        Gtk4.css_classes(w, v)
     elseif k == :cssname
-        w.name = v
+        Gtk4.css_name(w, v)
     elseif k == :hasfocus
         if v
             Gtk4.grab_focus(w)

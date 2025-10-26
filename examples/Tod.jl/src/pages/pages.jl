@@ -1,5 +1,5 @@
 module Pages
-using ...Tod: User, Todo
+using ...Tod: User, Todo, Collection
 using Gtak
 
 include("./login.jl")

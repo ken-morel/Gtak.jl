@@ -62,14 +62,18 @@ function Base.show(w::Window, p::AbstractPage)
     widgets = mount!(p, getcontext(w))
 
     if !isnothing(lastpage)
-        unmount!(lastpage)
+        schedule!(w.scheduler) do
+            unmount!(lastpage)
+        end
+    end
+    if !isnothing(lastpage)
         stylesheet = getstylesheet(lastpage)
         !isnothing(stylesheet) && unmount!(stylesheet)
     end
     empty!(w._box) # Just in case
     stylesheet = getstylesheet(p)
-    !isnothing(stylesheet) && unmount!(stylesheet)
-    !isempty(widgets) && push!(w._box, widgets...)
+    isnothing(stylesheet) || mount!(stylesheet, w.window)
+    isempty(widgets) || push!(w._box, widgets...)
     return widgets
 end
 
