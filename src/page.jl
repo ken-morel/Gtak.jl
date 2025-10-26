@@ -23,7 +23,7 @@ structures.
 """
 abstract type AbstractPage <: GtakComponent end
 
-getstylesheet(p::AbstractPage) = p.style
+getstylesheet(p::AbstractPage) = p.stylesheet
 
 
 """

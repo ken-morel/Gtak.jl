@@ -1,8 +1,7 @@
 createapplication() = application("com.example.tod") do app
     setupstores!(app)
     app.data[:user] = nothing
-    mount!(todstyle, app)
-    window(app; title = "Gtak application") do _
+    window(app; title = "Gtak application", stylesheet = TODSTYLE) do _
         Pages.Login
     end
 end

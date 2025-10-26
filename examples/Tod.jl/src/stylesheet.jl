@@ -1,4 +1,4 @@
-const todstyle = stylesheet"""
+const TODSTYLE = stylesheet"""
 .login-box {
     margin: 100px;
     padding: 20px;
