@@ -180,20 +180,35 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
             foreach(unmount!, c.children)
         end
 
-        for widget in widgets
-            if hasproperty(c, widget) && !isnothing(getfield(c, widget))
-                widget_obj = getfield(c, widget)
-                parent = Gtk4.parent(widget_obj)
-                if parent isa GtkFrame || parent isa GtkButton
-                    parent[] = nothing
-                elseif !isnothing(parent)
+        for widgetprop in widgets
+            widget = getproperty(c, widgetprop)
+            if !isnothing(widget)
+                parent = Gtk4.parent(widget)
+                if !isnothing(parent)
                     try
-                        delete!(parent, widget_obj)
-                    catch e
-                        @warn "Error removing widget $(typeof(widgets)) from parent of type $(typeof(parent)) using delete" exception = e
+                        if parent isa Gtk4.GtkFrame || parent isa Gtk4.GtkButton || parent isa Gtk4.GtkScrolledWindow
+                            Gtk4.set_child(parent, nothing)
+                        elseif parent isa Gtk4.GtkPaned
+                            if Gtk4.get_start_child(parent) == widget
+                                Gtk4.set_start_child!(parent, nothing)
+                            elseif Gtk4.get_end_child(parent) == widget
+                                Gtk4.set_end_child!(parent, nothing)
+                            end
+                        elseif parent isa Gtk4.GtkNotebook
+                            for i in 0:(Gtk4.get_n_pages(parent) - 1)
+                                if Gtk4.get_nth_page(parent, i) == widget
+                                    Gtk4.remove_page(parent, i)
+                                    break
+                                end
+                            end
+                        else
+                            # Fallback to delete! for GtkBox, GtkGrid, and others
+                            delete!(parent, widget)
+                        end
+                    catch
                     end
                 end
-                setproperty!(c, widget, nothing)
+                setproperty!(c, widgetprop, nothing)
             end
         end
     end

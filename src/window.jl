@@ -58,18 +58,15 @@ function Base.show(w::Window, p::AbstractPage)
     end
     lastpage = w.current_page
 
-    w.current_page = p
-    widgets = mount!(p, getcontext(w))
 
     if !isnothing(lastpage)
-        schedule!(w.scheduler) do
-            unmount!(lastpage)
-        end
-    end
-    if !isnothing(lastpage)
+        unmount!(lastpage)
         stylesheet = getstylesheet(lastpage)
         !isnothing(stylesheet) && unmount!(stylesheet)
     end
+    w.current_page = p
+    widgets = mount!(p, getcontext(w))
+
     empty!(w._box) # Just in case
     stylesheet = getstylesheet(p)
     isnothing(stylesheet) || mount!(stylesheet, w.window)
@@ -108,7 +105,7 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
     w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
     w.app = app
     w.window = GtkApplicationWindow(w.app.app, w.title)
-    w._box = GtkBox(:v)
+    w._box = GtkBox(:v; hexpand = true, vexpand = true)
     w.window[] = w._box
     start!(w.scheduler)
     page = getvalue(w.router.current_page)

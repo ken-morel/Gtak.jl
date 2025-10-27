@@ -45,9 +45,9 @@ function LoginContent(onmount)
       Box cssclasses=["login-box"]
         Frame
           Grid expand=true margin=20 spacing=10
-            Label text="Your username: " lay:pos=(1,1)
+            Label text="Username: " lay:pos=(1,1)
             Entry text=name margin=(0,0,0,25) lay:pos=(1,2)
-            Label text="Your password: " lay:pos=(2,1)
+            Label text="Password: " lay:pos=(2,1)
             Entry text=password margin=(0,0,0,25) lay:pos=(2,2)
           Keyed deps=[error]
             builder()

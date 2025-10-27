@@ -69,12 +69,7 @@ signal to mount it's windows when
 function IonicEfus.mount!(app::Application)::GtkApplication
     app.app = GtkApplication(app.id)
     signal_connect(app.app, :activate) do _
-        if !isnothing(app.stylesheet)
-            win = first(app.windows).window
-            if !isnothing(win)
-                mount!(app.stylesheet, Gtk4.display(win))
-            end
-        end
+        mount!(app.stylesheet, Gtk4.GdkDisplay())
         mount!.(app.windows, (app,))
     end
     return app.app

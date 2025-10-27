@@ -1,11 +1,12 @@
-@time using Revise
-@time using Tod
+using Revise
+using Tod
 
-@time const app = Tod.createapplication()
+const app = Tod.createapplication()
 
-@time errormonitor(
-    @async Revise.entr([], [Tod, Tod.Gtak, Tod.Gtak.IonicEfus]) do
+errormonitor(
+    @async Revise.entr([], [Tod]) do
         try
+            println("Reloading in...")
             @time Tod.Gtak.reload!(app; all = true)
         catch e
             showerror(stderr, e)
