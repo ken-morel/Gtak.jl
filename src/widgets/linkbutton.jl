@@ -6,10 +6,12 @@ export LinkButton
 end
 
 function mount!(lb::LinkButton, p::GtakComponent)
-    lb._parent = p
-    lb._widget = GtkLinkButton(lb.link)
-    _gtakwidgetmountcommon!(lb, [])
-    return lb._widget
+    @lock lb begin
+        lb._parent = p
+        lb._widget = GtkLinkButton(lb.link)
+        _gtakwidgetmountcommon!(lb, [])
+        return lb._widget
+    end
 end
 
 function update!(l::LinkButton)

@@ -167,8 +167,10 @@ the page(if not already done) then
 rebuilds the page.
 """
 function reload!(p::ReloadablePage)
-    unmount!(p)
-    p.content = @invokelatest p.builder(cb -> onmount!(cb, p))
+    @lock p begin
+        unmount!(p)
+        p.content = @invokelatest p.builder(cb -> onmount!(cb, p))
+    end
     return p
 end
 
@@ -187,16 +189,18 @@ Mount the specified page, and bind it to
 the scheduler for ui updates.
 """
 function IonicEfus.mount!(p::AbstractPage, ctx::Union{PageContext, Nothing} = nothing)
-    p.context = ctx
+    @lock p begin
+        p.context = ctx
 
-    contents = mount!.(p.content, (p,))
-    unmounter = if !isnothing(p.onmount)
-        @invokelatest p.onmount(p, ctx)
+        contents = mount!.(p.content, (p,))
+        unmounter = if !isnothing(p.onmount)
+            @invokelatest p.onmount(p, ctx)
+        end
+        if unmounter isa Function
+            onunmount!(unmounter, p)
+        end
+        return contents
     end
-    if unmounter isa Function
-        onunmount!(unmounter, p)
-    end
-    return contents
 end
 
 "Unmount, then remount the passed page"
@@ -204,11 +208,13 @@ remount!(::AbstractPage) = error("Remounting pages is unsupported")
 
 "Unmount the page"
 function unmount!(p::AbstractPage)
-    if p.onunmount isa Function
-        @invokelatest p.onunmount(p)
+    @lock p begin
+        if p.onunmount isa Function
+            @invokelatest p.onunmount(p)
+        end
+        foreach(unmount!, p.content)
+        p.context = nothing
     end
-    foreach(unmount!, p.content)
-    p.context = nothing
     return
 end
 

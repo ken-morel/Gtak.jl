@@ -34,86 +34,94 @@ const _gtak_common = Set(
     ]
 )
 function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: GtakComponent}
-    return if k == :margin
-        if length(v) == 1
-            w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
-        elseif length(v) == 2
-            w.margin_top, w.margin_start = v
-            w.margin_bottom, w.margin_end = v
-        elseif length(v) == 4
-            w.margin_top, w.margin_end, w.margin_bottom, w.margin_start = v
-        else
-            @warn "Component of type $C Invalid margin $v"
-        end
-    elseif k == :align
-        if v isa Tuple
-            v, h = v
-            isnothing(v) || setproperty!(w, :valign, v)
-            isnothing(h) || setproperty!(w, :halign, h)
-        else
-            w.valign = w.halign = v
-        end
-    elseif k == :expand
-        if length(v) == 1
-            w.hexpand = w.vexpand = v
-        elseif length(v) == 2
-            w.vexpand, w.hexpand = v
-        else
-            @warn "Component of type $C received invalid expand $v"
-        end
-    elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible, :width_request, :height_request])
-        setproperty!(w, k, v)
-        w.tooltip_markup = v
-    elseif k == :cssclasses
-        Gtk4.css_classes(w, v)
-    elseif k == :cssname
-        Gtk4.css_name(w, v)
-    elseif k == :hasfocus
-        if v
-            Gtk4.grab_focus(w)
-        else
-            toplevel = Gtk4.Gtk.toplevel(w)
-            if toplevel isa Gtk4.GtkWindow
-                toplevel.focus = nothing
+    @lock c begin
+        if k == :margin
+            if length(v) == 1
+                w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
+            elseif length(v) == 2
+                w.margin_top, w.margin_start = v
+                w.margin_bottom, w.margin_end = v
+            elseif length(v) == 4
+                w.margin_top, w.margin_end, w.margin_bottom, w.margin_start = v
+            else
+                @warn "Component of type $C Invalid margin $v"
+            end
+        elseif k == :align
+            if v isa Tuple
+                v, h = v
+                isnothing(v) || setproperty!(w, :valign, v)
+                isnothing(h) || setproperty!(w, :halign, h)
+            else
+                w.valign = w.halign = v
+            end
+        elseif k == :expand
+            if length(v) == 1
+                w.hexpand = w.vexpand = v
+            elseif length(v) == 2
+                w.vexpand, w.hexpand = v
+            else
+                @warn "Component of type $C received invalid expand $v"
+            end
+        elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible, :width_request, :height_request])
+            setproperty!(w, k, v)
+            w.tooltip_markup = v
+        elseif k == :cssclasses
+            Gtk4.css_classes(w, v)
+        elseif k == :cssname
+            Gtk4.css_name(w, v)
+        elseif k == :hasfocus
+            if v
+                Gtk4.grab_focus(w)
+            else
+                toplevel = Gtk4.Gtk.toplevel(w)
+                if toplevel isa Gtk4.GtkWindow
+                    toplevel.focus = nothing
+                end
             end
         end
+
     end
+    return
+end
 
-end
-for n in [:lock, :trylock, :unlock]
-    @eval Base.$n(c::GtakComponent) = Base.$n(c._lock)
-end
 function _updates(fn::Function, c::Component)
-    ismounted(c) || return
-    @lock c while !isempty(c._dirty)
-        key = pop!(c._dirty)
-        if key in _gtak_common
-            val = getproperty(c, key)
-
-            isnothing(val) || _gtakwidgetupdatecommon(
-                c,
-                c._widget,
-                key,
-                val isa AbstractReactive
-                    ? getvalue(val)
-                    : val
-            )
+    @lock c begin
+        if ismounted(c)
+            println("Updating mounted $(typeof(c))")
         else
-            fn(key)
+            println("Not mounted, cannot update $(typeof(c))")
+        end
+        println("And nothing: ", isnothing(c._widget))
+        while !isempty(c._dirty)
+            key = pop!(c._dirty)
+            if key in _gtak_common
+                val = getproperty(c, key)
+
+                isnothing(val) || _gtakwidgetupdatecommon(
+                    c,
+                    c._widget,
+                    key,
+                    val isa AbstractReactive
+                        ? getvalue(val)
+                        : val
+                )
+            else
+                fn(key)
+            end
         end
     end
     return
 end
 update!(c::GtakComponent) = _updates(identity, c)
 function _gtakwidgetmountcommon!(c, donttrack::Vector)
-    @assert !isnothing(c._widget)
-    for (name,) in params(c)
-        dirty!(c, name)
+    @lock c begin
+        for (name,) in params(c)
+            dirty!(c, name)
+            @assert !isnothing(c._widget) "$name errored amongst $(params(c))"
+        end
+        _trackreactiveattributes(c, donttrack)
+        schedule(c, Sched.ComponentUpdate(c, Sched.High))
     end
-    update!(c)
-    @assert !isnothing(c._widget)
-    _trackreactiveattributes(c, donttrack)
-    @assert !isnothing(c._widget)
     return
 end
 function _trackreactiveattributes(c::GtakComponent, skip::Vector = [])
@@ -211,8 +219,8 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
                 setproperty!(c, widgetprop, nothing)
             end
         end
+        return
     end
-    return
 end
 
 
@@ -224,15 +232,15 @@ function scheduleupdate(c::GtakComponent, priority::Sched.Priority = Sched.Norma
 end
 
 function dirty!(c::GtakComponent, attr::Symbol; priority::Union{Sched.Priority, Nothing} = Sched.Normal)
-    @lock c if hasproperty(c, :_dirty)
+    @lock c begin
         push!(c._dirty, attr)
         !isnothing(priority) && scheduleupdate(c, priority)
     end
     return
 end
 function dirty!(c::GtakComponent, attr::Symbol, value; priority::Union{Sched.Priority, Nothing} = Sched.Normal)
-    @lock c if hasproperty(c, attr)
-        setfield!(c, attr, value)
+    @lock c begin
+        setproperty!(c, attr, value)
         dirty!(c, attr; priority)
     end
     return
@@ -245,9 +253,12 @@ function Base.schedule(c::GtakComponent, task::Sched.AbstractPriorityTask)
     return schedule(p, task)
 end
 function getcomponentlayout(c::Component)
-    return if hasproperty(c, :lay) && c.lay isa SubParams
-        c.lay
-    else
-        SubParams()
+    @lock c begin
+        if hasproperty(c, :lay) && c.lay isa SubParams
+            c.lay
+        else
+            SubParams()
+        end
     end
+    return
 end

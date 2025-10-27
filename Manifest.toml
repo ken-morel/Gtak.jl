@@ -180,7 +180,7 @@ uuid = "3b182d85-2403-5c21-9c21-1e1f0cc25472"
 version = "1.3.15+0"
 
 [[deps.Gtak]]
-deps = ["Atak", "BaseDirs", "FunctionWrappers", "Gtk4", "IonicEfus", "Markdown", "Reexport", "StructUtils"]
+deps = ["Atak", "BaseDirs", "FunctionWrappers", "Gtk4", "IonicEfus", "Reexport", "StructUtils"]
 path = "."
 uuid = "9deccea8-f743-493b-a773-936bee031b92"
 version = "0.1.0"

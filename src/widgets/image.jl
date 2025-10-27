@@ -7,14 +7,16 @@ export Image
 end
 
 function mount!(i::Image, p::GtakComponent)
-    i._parent = p
-    i._widget = GtkImage()
-    _gtakwidgetmountcommon!(i, [])
-    return i._widget
+    @lock i begin
+        i._parent = p
+        i._widget = GtkImage()
+        _gtakwidgetmountcommon!(i, [])
+        return i._widget
+    end
 end
 
 function update!(i::Image)
-    _updates(i) do dirt
+    return _updates(i) do dirt
         if dirt == :file && !isnothing(i.file)
             i._widget.file = resolve(String, i.file)
         elseif dirt == :icon_name && !isnothing(i.icon_name)

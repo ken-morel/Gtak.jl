@@ -13,34 +13,36 @@ export Scale
 end
 
 function mount!(s::Scale, p::GtakComponent)
-    s._parent = p
-    adj = GtkAdjustment(resolve(s.value), resolve(s.min), resolve(s.max), resolve(s.step), 10.0, 0.0)
-    s._widget = GtkScale(s.orient == O_H, adj)
-    _gtakwidgetmountcommon!(s, [])
+    @lock s begin
+        s._parent = p
+        adj = GtkAdjustment(resolve(s.value), resolve(s.min), resolve(s.max), resolve(s.step), 10.0, 0.0)
+        s._widget = GtkScale(s.orient == O_H, adj)
+        _gtakwidgetmountcommon!(s, [])
 
-    s._signal_id = signal_connect(s._widget, "value-changed") do _
-        new_val = Gtk4.value(s._widget)
-        if !isnothing(s.onchange)
-            schedule(
-                s, Sched.CallbackCall(s.onchange, Sched.UserInteractive) do
-                    @invokelatest s.onchange(new_val)
-                end
-            )
-        end
-        if s.value isa AbstractReactive
-            schedule(
-                s, Sched.ReactantUpdate(s.value, Sched.UserInteractive) do
-                    trylock(s._valuelock) && try
-                        @ionic s.value' = new_val
-                    finally
-                        unlock(s._valuelock)
+        s._signal_id = signal_connect(s._widget, "value-changed") do _
+            new_val = Gtk4.value(s._widget)
+            if !isnothing(s.onchange)
+                schedule(
+                    s, Sched.CallbackCall(s.onchange, Sched.UserInteractive) do
+                        @invokelatest s.onchange(new_val)
                     end
-                end
-            )
+                )
+            end
+            if s.value isa AbstractReactive
+                schedule(
+                    s, Sched.ReactantUpdate(s.value, Sched.UserInteractive) do
+                        trylock(s._valuelock) && try
+                            @ionic s.value' = new_val
+                        finally
+                            unlock(s._valuelock)
+                        end
+                    end
+                )
+            end
         end
-    end
 
-    return s._widget
+        return s._widget
+    end
 end
 
 function update!(s::Scale)
@@ -63,9 +65,12 @@ function update!(s::Scale)
 end
 
 function unmount!(s::Scale)
-    if s._widget !== nothing && s._signal_id != 0
-        signal_handler_disconnect(s._widget, s._signal_id)
-        s._signal_id = 0
+    @lock s begin
+        if s._widget !== nothing && s._signal_id != 0
+            signal_handler_disconnect(s._widget, s._signal_id)
+            s._signal_id = 0
+        end
+        _gtakunmountwidget!(s)
     end
-    return _gtakunmountwidget!(s)
+    return
 end

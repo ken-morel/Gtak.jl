@@ -5,10 +5,12 @@ export Spinner
 end
 
 function mount!(s::Spinner, p::GtakComponent)
-    s._parent = p
-    s._widget = GtkSpinner()
-    _gtakwidgetmountcommon!(s, [])
-    return s._widget
+    @lock s begin
+        s._parent = p
+        s._widget = GtkSpinner()
+        _gtakwidgetmountcommon!(s, [])
+        return s._widget
+    end
 end
 
 function update!(s::Spinner)

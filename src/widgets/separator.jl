@@ -6,10 +6,12 @@ end
 
 
 function mount!(s::Separator, p::GtakComponent)
-    s._parent = p
-    s._widget = GtkSeparator(resolve(Gtk4.Orientation, s.orient))
-    _gtakwidgetmountcommon!(s, [])
-    return s._widget
+    @lock s begin
+        s._parent = p
+        s._widget = GtkSeparator(resolve(Gtk4.Orientation, s.orient))
+        _gtakwidgetmountcommon!(s, [])
+        return s._widget
+    end
 end
 
 function update!(l::Separator)

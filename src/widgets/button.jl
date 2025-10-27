@@ -13,31 +13,33 @@ end
 
 
 function mount!(b::Button, p::GtakComponent)
-    b._parent = p
-    b._widget = GtkButton()
-    _gtakwidgetmountcommon!(b, [])
-    if !isnothing(b.actionname)
-        b._widget.action_name = b.actionname
-    end
-    if isempty(b.children)
-        b._widget[] = b._label = GtkLabel(resolve(String, b.text))
-    else
-        b._widget[] = mount!(b.children[1], b)
-        if length(b.children) > 1
-            @warn "Label received more than one child"
+    @lock b begin
+        b._parent = p
+        b._widget = GtkButton()
+        _gtakwidgetmountcommon!(b, [])
+        if !isnothing(b.actionname)
+            b._widget.action_name = b.actionname
         end
-    end
-    b._handler_id = signal_connect(b._widget, :clicked) do _
-        if !isnothing(b.onclick)
-            schedule(
-                b, Sched.CallbackCall(b.onclick, Sched.UserInteractive) do
-                    @invokelatest b.onclick()
-                end
-            )
+        if isempty(b.children)
+            b._widget[] = b._label = GtkLabel(resolve(String, b.text))
+        else
+            b._widget[] = mount!(b.children[1], b)
+            if length(b.children) > 1
+                @warn "Label received more than one child"
+            end
         end
-        return
+        b._handler_id = signal_connect(b._widget, :clicked) do _
+            if !isnothing(b.onclick)
+                schedule(
+                    b, Sched.CallbackCall(b.onclick, Sched.UserInteractive) do
+                        @invokelatest b.onclick()
+                    end
+                )
+            end
+            return
+        end
+        return b._widget
     end
-    return b._widget
 end
 
 
@@ -50,10 +52,12 @@ function update!(c::Button)
 end
 
 function unmount!(b::Button)
-    if b._widget !== nothing && b._handler_id != 0
-        signal_handler_disconnect(b._widget, b._handler_id)
-        b._handler_id = 0
+    @lock b begin
+        if b._widget !== nothing && b._handler_id != 0
+            signal_handler_disconnect(b._widget, b._handler_id)
+            b._handler_id = 0
+        end
+        _gtakunmountwidget!(b; widgets = [:_label, :_widget])
+        return
     end
-    _gtakunmountwidget!(b; widgets = [:_label, :_widget])
-    return
 end

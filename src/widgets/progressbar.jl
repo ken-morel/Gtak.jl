@@ -7,14 +7,16 @@ export ProgressBar
 end
 
 function mount!(pb::ProgressBar, p::GtakComponent)
-    pb._parent = p
-    pb._widget = GtkProgressBar()
-    _gtakwidgetmountcommon!(pb, [])
-    return pb._widget
+    @lock pb begin
+        pb._parent = p
+        pb._widget = GtkProgressBar()
+        _gtakwidgetmountcommon!(pb, [])
+        return pb._widget
+    end
 end
 
 function update!(pb::ProgressBar)
-    _updates(pb) do dirt
+    return _updates(pb) do dirt
         if dirt == :fraction
             pb._widget.fraction = resolve(Float64, pb.fraction)
         elseif dirt == :show_text && !isnothing(pb.show_text)

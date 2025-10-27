@@ -10,37 +10,39 @@ export ComboBoxText
 end
 
 function mount!(cbt::ComboBoxText, p::GtakComponent)
-    cbt._parent = p
-    cbt._widget = GtkComboBoxText()
-    _gtakwidgetmountcommon!(cbt, [])
+    @lock cbt begin
+        cbt._parent = p
+        cbt._widget = GtkComboBoxText()
+        _gtakwidgetmountcommon!(cbt, [])
 
-    cbt._signal_id = signal_connect(cbt._widget, "changed") do _
-        new_active = Gtk4.active(cbt._widget)
-        if !isnothing(cbt.onchange)
-            schedule(
-                cbt, Sched.CallbackCall(cbt.onchange, Sched.UserInteractive) do
-                    @invokelatest cbt.onchange(new_active)
-                end
-            )
-        end
-        if cbt.active isa AbstractReactive
-            schedule(
-                cbt, Sched.ReactantUpdate(cbt.active, Sched.UserInteractive) do
-                    trylock(cbt._activelock) && try
-                        @ionic cbt.active' = new_active
-                    finally
-                        unlock(cbt._activelock)
+        cbt._signal_id = signal_connect(cbt._widget, "changed") do _
+            new_active = Gtk4.active(cbt._widget)
+            if !isnothing(cbt.onchange)
+                schedule(
+                    cbt, Sched.CallbackCall(cbt.onchange, Sched.UserInteractive) do
+                        @invokelatest cbt.onchange(new_active)
                     end
-                end
-            )
+                )
+            end
+            if cbt.active isa AbstractReactive
+                schedule(
+                    cbt, Sched.ReactantUpdate(cbt.active, Sched.UserInteractive) do
+                        trylock(cbt._activelock) && try
+                            @ionic cbt.active' = new_active
+                        finally
+                            unlock(cbt._activelock)
+                        end
+                    end
+                )
+            end
         end
-    end
 
-    return cbt._widget
+        return cbt._widget
+    end
 end
 
 function update!(cbt::ComboBoxText)
-    _updates(cbt) do dirt
+    return _updates(cbt) do dirt
         if dirt == :items
             Gtk4.remove_all(cbt._widget)
             for item in resolve(Vector{String}, cbt.items)
@@ -63,9 +65,11 @@ function update!(cbt::ComboBoxText)
 end
 
 function unmount!(cbt::ComboBoxText)
-    if cbt._widget !== nothing && cbt._signal_id != 0
-        signal_handler_disconnect(cbt._widget, cbt._signal_id)
-        cbt._signal_id = 0
+    @lock cbt begin
+        if cbt._widget !== nothing && cbt._signal_id != 0
+            signal_handler_disconnect(cbt._widget, cbt._signal_id)
+            cbt._signal_id = 0
+        end
+        return _gtakunmountwidget!(cbt)
     end
-    _gtakunmountwidget!(cbt)
 end

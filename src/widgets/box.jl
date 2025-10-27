@@ -15,14 +15,16 @@ HBox(; args...) = Box(; orient = O_H, args...)
 VBox(; args...) = Box(; orient = O_V, args...)
 
 function mount!(b::Box, p::GtakComponent)
-    b._parent = p
-    b._widget = GtkBox(b.orient)
-    _gtakwidgetmountcommon!(b, [])
-    for child in b.children
-        widget = mount!(child, b)
-        push!(b._widget, widget)
+    @lock b begin
+        b._parent = p
+        b._widget = GtkBox(b.orient)
+        _gtakwidgetmountcommon!(b, [])
+        for child in b.children
+            widget = mount!(child, b)
+            push!(b._widget, widget)
+        end
+        return b._widget
     end
-    return b._widget
 end
 
 function update!(b::Box)

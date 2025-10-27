@@ -8,23 +8,25 @@ export ScrolledWindow
 end
 
 function mount!(sw::ScrolledWindow, p::GtakComponent)
-    sw._parent = p
-    sw._widget = GtkScrolledWindow()
-    _gtakwidgetmountcommon!(sw, [])
+    @lock sw begin
+        sw._parent = p
+        sw._widget = GtkScrolledWindow()
+        _gtakwidgetmountcommon!(sw, [])
 
-    if !isempty(sw.children)
-        if length(sw.children) > 1
-            @warn "ScrolledWindow can only have one child."
+        if !isempty(sw.children)
+            if length(sw.children) > 1
+                @warn "ScrolledWindow can only have one child."
+            end
+            child_widget = mount!(sw.children[1], sw)
+            sw._widget.child = child_widget
         end
-        child_widget = mount!(sw.children[1], sw)
-        sw._widget.child = child_widget
-    end
 
-    return sw._widget
+        return sw._widget
+    end
 end
 
 function update!(sw::ScrolledWindow)
-    _updates(sw) do dirt
+    return _updates(sw) do dirt
         if dirt == :hscrollbar_policy && !isnothing(sw.hscrollbar_policy)
             Gtk4.hscrollbar_policy(sw._widget, resolve(Gtk4.PolicyType, sw.hscrollbar_policy))
         elseif dirt == :vscrollbar_policy && !isnothing(sw.vscrollbar_policy)

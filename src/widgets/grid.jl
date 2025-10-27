@@ -9,24 +9,26 @@ end
 
 
 function mount!(g::Grid, p::GtakComponent)
-    g._parent = p
-    g._widget = GtkGrid()
-    _gtakwidgetmountcommon!(g, [])
+    @lock g begin
+        g._parent = p
+        g._widget = GtkGrid()
+        _gtakwidgetmountcommon!(g, [])
 
-    for child in g.children
-        lay = getcomponentlayout(child)
-        if :pos in keys(lay)
-            if lay[:pos] isa Tuple && length(lay[:pos]) == 2
-                r, c = lay[:pos]
-                g._widget[c, r] = mount!(child, g)
+        for child in g.children
+            lay = getcomponentlayout(child)
+            if :pos in keys(lay)
+                if lay[:pos] isa Tuple && length(lay[:pos]) == 2
+                    r, c = lay[:pos]
+                    g._widget[c, r] = mount!(child, g)
+                else
+                    error("Invalid lay:pos field $(lay[:pos]) of type $(typeof(lay[:pos]))")
+                end
             else
-                error("Invalid lay:pos field $(lay[:pos]) of type $(typeof(lay[:pos]))")
+                error("Grid child of type $(typeof(child)) has no lay:pos field")
             end
-        else
-            error("Grid child of type $(typeof(child)) has no lay:pos field")
         end
+        return g._widget
     end
-    return g._widget
 end
 
 function update!(g::Grid)

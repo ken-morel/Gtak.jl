@@ -13,43 +13,45 @@ end
 
 
 function mount!(e::Entry, p::GtakComponent)
-    e._parent = p
-    e._widget = GtkEntry(text = resolve(String, e.text))
-    _gtakwidgetmountcommon!(e, [:text])
-    if e.text isa AbstractReactive
-        catalyze!(e._catalyst, e.text) do r
-            trylock(e._textlock) && try
-                val = getvalue(r)
-                if e._widget.text != val
-                    e._widget.text = val
+    @lock e begin
+        e._parent = p
+        e._widget = GtkEntry(text = resolve(String, e.text))
+        _gtakwidgetmountcommon!(e, [:text])
+        if e.text isa AbstractReactive
+            catalyze!(e._catalyst, e.text) do r
+                trylock(e._textlock) && try
+                    val = getvalue(r)
+                    if e._widget.text != val
+                        e._widget.text = val
+                    end
+                finally
+                    unlock(e._textlock)
                 end
+            end
+        end
+        e._changed_handler_id = signal_connect(e._widget, "changed") do _
+            current_text = e._widget.text
+            trylock(e._textlock) && try
+                if e.text isa AbstractReactive
+                    if getvalue(e.text) != current_text
+                        setvalue!(e.text, current_text)
+                    end
+                end
+
             finally
                 unlock(e._textlock)
             end
-        end
-    end
-    e._changed_handler_id = signal_connect(e._widget, "changed") do _
-        current_text = e._widget.text
-        trylock(e._textlock) && try
-            if e.text isa AbstractReactive
-                if getvalue(e.text) != current_text
-                    setvalue!(e.text, current_text)
-                end
+            if !isnothing(e.onchange)
+                schedule(
+                    e, Sched.CallbackCall(e.onchange, Sched.Normal) do
+                        @invokelatest e.onchange(current_text)
+                    end
+                )
             end
+        end
 
-        finally
-            unlock(e._textlock)
-        end
-        if !isnothing(e.onchange)
-            schedule(
-                e, Sched.CallbackCall(e.onchange, Sched.Normal) do
-                    @invokelatest e.onchange(current_text)
-                end
-            )
-        end
+        return e._widget
     end
-
-    return e._widget
 end
 
 function update!(e::Entry)
@@ -63,10 +65,12 @@ function update!(e::Entry)
 end
 
 function unmount!(e::Entry)
-    if e._widget !== nothing && e._changed_handler_id !== 0
-        signal_handler_disconnect(e._widget, e._changed_handler_id)
-        e._changed_handler_id = 0
+    @lock e begin
+        if e._widget !== nothing && e._changed_handler_id !== 0
+            signal_handler_disconnect(e._widget, e._changed_handler_id)
+            e._changed_handler_id = 0
+        end
+        _gtakunmountwidget!(e)
     end
-    _gtakunmountwidget!(e)
     return
 end

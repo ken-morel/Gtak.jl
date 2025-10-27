@@ -9,14 +9,19 @@ end
 
 
 function mount!(f::Frame, p::GtakComponent)
-    f._parent = p
-    f._widget = GtkFrame()
-    _gtakwidgetmountcommon!(f, [])
-    f._widget[] = mount!(f._innerbox, f)
-    return f._widget
+    @lock f begin
+        f._parent = p
+        f._widget = GtkFrame()
+        _gtakwidgetmountcommon!(f, [])
+        f._widget[] = mount!(f._innerbox, f)
+        return f._widget
+    end
 end
 
 function unmount!(f::Frame)
-    unmount!(f._innerbox)
-    return _gtakunmountwidget!(f)
+    @lock f begin
+        unmount!(f._innerbox)
+        _gtakunmountwidget!(f)
+    end
+    return
 end

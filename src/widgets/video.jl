@@ -7,10 +7,12 @@ export Video
 end
 
 function mount!(v::GtkVideo, p::GtakComponent)
-    v._parent = p
-    v._widget = GtkVideo()
-    _gtakwidgetmountcommon!(v, [])
-    return v._widget
+    @lock v begin
+        v._parent = p
+        v._widget = GtkVideo()
+        _gtakwidgetmountcommon!(v, [])
+        return v._widget
+    end
 end
 
 function update!(v::Video)

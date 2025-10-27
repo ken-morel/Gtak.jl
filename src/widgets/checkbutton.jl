@@ -11,35 +11,37 @@ end
 
 
 function mount!(c::CheckButton, p::GtakComponent)
-    c._parent = p
-    c._widget = GtkCheckButton()
-    c._widget.active = resolve(c.value)
-    _gtakwidgetmountcommon!(c, [])
-    if !isempty(c.children)
-        c._widget[] = mount!(c.children[1])
-    end
-    signal_connect(c._widget, "toggled") do _
-        if !isnothing(c.ontoggle)
-            schedule(
-                c, Sched.CallbackCall(c.ontoggle, Sched.High) do
-                    @invokelatest c.ontoggle(c._widget.active)
-                end
-            )
+    @lock c begin
+        c._parent = p
+        c._widget = GtkCheckButton()
+        c._widget.active = resolve(c.value)
+        _gtakwidgetmountcommon!(c, [])
+        if !isempty(c.children)
+            c._widget[] = mount!(c.children[1])
         end
-        if c.value isa AbstractReactive
-            schedule(
-                c, Sched.ReactantUpdate(c.value, Sched.UserInteractive) do
-                    trylock(c._valuelock) && try
-                        @ionic c.value' = c._widget.active
-                    finally
-                        unlock(c._valuelock)
+        signal_connect(c._widget, "toggled") do _
+            if !isnothing(c.ontoggle)
+                schedule(
+                    c, Sched.CallbackCall(c.ontoggle, Sched.High) do
+                        @invokelatest c.ontoggle(c._widget.active)
                     end
-                end
-            )
+                )
+            end
+            if c.value isa AbstractReactive
+                schedule(
+                    c, Sched.ReactantUpdate(c.value, Sched.UserInteractive) do
+                        trylock(c._valuelock) && try
+                            @ionic c.value' = c._widget.active
+                        finally
+                            unlock(c._valuelock)
+                        end
+                    end
+                )
+            end
         end
-    end
 
-    return c._widget
+        return c._widget
+    end
 end
 
 
@@ -53,9 +55,11 @@ end
 
 
 function unmount!(c::CheckButton)
-    if c._widget !== nothing  && c._signal_id != 0
-        signal_handler_disconnect(c._widget, c._signal_id)
-        c._signal_id = 0
+    @lock c begin
+        if c._widget !== nothing  && c._signal_id != 0
+            signal_handler_disconnect(c._widget, c._signal_id)
+            c._signal_id = 0
+        end
+        return _gtakunmountwidget!(c)
     end
-    return _gtakunmountwidget!(c)
 end
