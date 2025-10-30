@@ -6,13 +6,9 @@ application("com.test") do app
         staticpage"""
         Button text="Toggle spin" onclick=(() -> spin' = !spin')
         Spinner spinning=spin
-        ReactiveBox deps=[spin]
+        Keyed deps=[spin]
           builder()
-            if spin'
-              Label text="Spinning!"
-            else
-              Label text="Not spinning"
-            end
+            Label text=(spin' ? "Spinning!" : "Not spinning")
           end
         """
     end

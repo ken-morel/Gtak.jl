@@ -12,13 +12,19 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     app::Union{GtkApplication, Nothing} = nothing
     stores::Dict{Symbol, Atak.AbstractStoreNode} = Dict()
     data::Dict{Symbol, Any} = Dict()
+    stylesheet::Union{Stylesheet, Nothing} = nothing
+    scheduler::Sched.Scheduler = Sched.Scheduler()
+    const _lock = ReentrantLock()
 end
+
+Base.schedule(fn::Function, a::Application) = schedule!(fn, a.scheduler)
+Base.schedule(a::Application, t::Sched.AbstractPriorityTask) = schedule!(a.scheduler, t)
 
 configdirs(a::Application) = joinpath.(BaseDirs.config(), (a.id,))
 cachedir(a::Application) = joinpath(BaseDirs.cache(), a.id)
 
 
-Base.push!(app::Application, win::AbstractGtakWindow) = push!(app.windows, win)
+Base.push!(app::Application, win::AbstractGtakWindow) = @lock app push!(app.windows, win)
 
 """
     application(init::Function, id::String)
@@ -29,7 +35,7 @@ and return it.
 """
 function application(init::Function, id::String; args...)
     app = Application(; id, args...)
-    init(app)
+    @lock app init(app)
     return app
 end
 
@@ -39,7 +45,7 @@ end
 Trigger reload of the current page or
 all pages of the windows of the application.
 """
-reload!(a::Application; all = false) = foreach(w -> reload!(w; all), a.windows)
+reload!(a::Application; all = false) = @lock a foreach(w -> reload!(w; all), a.windows)
 
 """
     Base.run(app::Application)
@@ -66,11 +72,16 @@ signal to mount it's windows when
 `activate` signal received.
 """
 function IonicEfus.mount!(app::Application)::GtkApplication
-    app.app = GtkApplication(app.id)
-    signal_connect(app.app, :activate) do _
-        mount!.(app.windows, (app,))
+    @lock app begin
+        app.app = GtkApplication(app.id)
+        signal_connect(app.app, :activate) do _
+            @lock app begin
+                isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())
+                mount!.(app.windows, (app,))
+            end
+        end
+        return app.app
     end
-    return app.app
 end
 
 """
@@ -80,22 +91,15 @@ Unmount the app windows(See [`IonicEfus.unmount!(::Window)`](@ref))
 and destroy the app.
 """
 function IonicEfus.unmount!(app::Application)
-    unmount!.(app.windows)
-    if !isnothing(app.app)
-        destroy(app.app)
+    @lock app begin
+        unmount!.(app.windows)
+        isnothing(app.stylesheet) ||unmount!(app.stylesheet)
+        if !isnothing(app.app)
+            destroy(app.app)
+        end
+        app.app = nothing
     end
-    app.app = nothing
     return
-end
-
-"""
-    IonicEfus.remount!(app::Application)
-
-Unmount the mount the app again.
-"""
-function IonicEfus.remount!(app::Application)
-    unmount!(app)
-    return mount!(app)
 end
 
 """

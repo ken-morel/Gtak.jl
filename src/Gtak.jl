@@ -4,9 +4,11 @@ using Reexport
 @reexport using IonicEfus
 @reexport using Gtk4
 @reexport using Atak
-@reexport import BaseDirs
+@reexport using BaseDirs: BaseDirs
 
-import IonicEfus: update!, mount!, unmount!, remount!, getchildren, getparent, dirty!, isdirty, params
+using StructUtils
+
+import IonicEfus: update!, mount!, unmount!, remount!, getchildren, getparent, dirty!, isdirty, params, getvalue, setvalue!
 
 
 using FunctionWrappers: FunctionWrapper
@@ -22,13 +24,12 @@ abstract type AbstractGtakWindow <: GtakComponent end
 
 
 include("./bridge.jl")
+include("./style.jl")
 include("./page.jl")
 include("./router.jl")
 include("./window.jl")
 
 include("./application.jl")
-
-#TODO: hello
 
 include("./component.jl")
 

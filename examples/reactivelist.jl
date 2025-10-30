@@ -1,19 +1,20 @@
 using Gtak
 
 const text = Reactant("Hello world")
-const items = Reactant(["Hello"])
 
-@radical begin
-    content = text'
-    items' = split(content, " ")
+struct Word
+    text::String
 end
 
+words = @reactor [Word(word) for word in split(text', " ")]
+
+
 const Page = staticpage"""
-ForBox items=(items')::Vector{String}
-  builder(item)
-    Label text="Hello $item"
+For items=(words')::Vector
+  builder(word)
+    Label text=(word.text)
   end
-Entry text=text # onchange here! not a reactant!
+Entry text=text
 """
 
 (@main)(_) = application("com.example") do app

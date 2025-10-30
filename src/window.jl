@@ -10,15 +10,28 @@ They implement efus component lifecycle, so can
 me reused an mounted from an app to another.
 """
 Base.@kwdef mutable struct Window <: AbstractGtakWindow
-    const catalyst::Catalyst = Catalyst()
+    const catalyst = Catalyst()
+    const _lock = ReentrantLock()
     _box::Union{GtkBox, Nothing} = nothing
     scheduler::Scheduler = Scheduler()
     router::Router = Router()
     title::String = "Gtak Window"
+    stylesheet::Union{Stylesheet, Nothing} = nothing
     window::Union{GtkWindow, Nothing} = nothing
     app::Union{AbstractGtakApplication, Nothing} = nothing
     current_page::Union{AbstractPage, Nothing} = nothing
+    context::Union{PageContext, Nothing} = nothing
 end
+
+"""
+    getcontext(::Window)
+
+Get the window's [`PageContext`](@ref).
+"""
+getcontext(w::Window) = w.context
+
+getapplication(w::Window) = w.app
+getscheduler(w::Window) = w.scheduler
 
 """
     reload!(w::Window; all::Bool = false)
@@ -28,33 +41,58 @@ if `all`, then reloads also the history stack
 and redisplays the first page.
 """
 function reload!(w::Window; all::Bool = false)
-    page = reload!(w.router; all)
-    return if page isa AbstractPage
-        show(w, page)
+    return @lock w begin
+        println("Reloading window")
+        page = reload!(w.router; all)
+        if page isa AbstractPage
+            show(w, page)
+        end
+        println("Reloaded window")
     end
 end
 
 """
-    Base.show(w::Window, p::AbstractPage)
+    Base.show(w::Window, p::Union{AbstractPage, Nothing})
 
 Mount and display the page in the window,
 unmounting previously shown page.
 """
-function Base.show(w::Window, p::AbstractPage)
+function Base.show(w::Window, p::Union{AbstractPage, Nothing})
+    @lock w begin
+        println("Showing page")
+        if isnothing(w.window)
+            println("Not showing page")
+            return
+        end
 
-    if isnothing(w.window)
-        @warn "Can't show page, window was not mounted"
-        return
+        lastpage = w.current_page
+
+        widgets = if p !== w.current_page
+            w.current_page = p
+            widgets = isnothing(p) ? nothing : mount!(p, getcontext(w))
+
+            if !isnothing(lastpage)
+                unmount!(lastpage)
+                stylesheet = getstylesheet(lastpage)
+                !isnothing(stylesheet) && unmount!(stylesheet)
+            end
+            widgets
+        else
+            unmount!(p)
+            mount!(p, getcontext(w))
+        end
+        empty!(w._box) # Just in case
+
+        if !isnothing(p)
+            stylesheet = getstylesheet(p)
+            isnothing(stylesheet) || mount!(stylesheet, Gtk4.display(w.window))
+            isempty(widgets) || push!(w._box, widgets...)
+            isempty(widgets) && @warn "Showing empty page in window"
+        end
+        return widgets
     end
-    if !isnothing(w.current_page)
-        unmount!(w.current_page)
-    end
-    w.current_page = p
-    widgets = mount!(p, w.scheduler)
-    empty!(w._box)
-    !isempty(widgets)  && push!(w._box, widgets...)
-    return widgets
 end
+
 
 """
     window(init::Function, app::AbstractGtakApplication; args...)
@@ -67,13 +105,15 @@ can return a page which will be shown on the window.
 """
 function window(init::Function, app::AbstractGtakApplication; args...)
     win = Window(; app, args...)
-    page = init(win)
-    if page isa AbstractPage
-        push!(win.router, page)
-    elseif page isa PageBuilder
-        push!(win.router, page())
+    @lock win begin
+        page = init(win)
+        if page isa AbstractPage
+            push!(win.router, page)
+        elseif page isa PageBuilder
+            push!(win.router, page())
+        end
+        push!(app, win)
     end
-    push!(app, win)
     return win
 end
 
@@ -84,24 +124,28 @@ Mounts the window in the application returning
 the underlying gtk widget.
 """
 function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
-    w.app = app
-    w.window = GtkApplicationWindow(w.app.app, w.title)
-    w._box = GtkBox(:v)
-    w.window[] = w._box
-    start!(w.scheduler)
-    page = getvalue(w.router.current_page)
-    if page isa AbstractPage
-        show(w, page)
-    end
-    catalyze!(w.catalyst, w.router.current_page) do r
-        if r isa AbstractPage
-            schedule!(w.sheduler, Sched.High) do
-                show(w, getvalue(r))
+    @lock w begin
+        w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
+        w.app = app
+        w.window = GtkApplicationWindow(w.app.app, w.title)
+        w._box = GtkBox(:v; hexpand = true, vexpand = true)
+        w.window[] = w._box
+        start!(w.scheduler)
+        page = getvalue(w.router.current_page)
+        if page isa AbstractPage
+            show(w, page)
+        end
+        catalyze!(w.catalyst, w.router.current_page) do r
+            page = getvalue(r)
+            if !isnothing(page)
+                schedule!(getscheduler(w), Sched.High) do
+                    show(w, page)
+                end
             end
         end
+        present(w.window)
+        return w.window
     end
-    present(w.window)
-    return w.window
 end
 
 """
@@ -110,17 +154,20 @@ end
 Unmount the window.
 """
 function IonicEfus.unmount!(w::Window)
-    if !isnothing(w.currentpage)
-        unmount!(w.current_page)
-        w.current_page = nothing
+    @lock w begin
+        if !isnothing(w.currentpage)
+            unmount!(w.current_page)
+            w.current_page = nothing
+        end
+        if !isnothing(w.window)
+            destroy(w.window)
+        end
+        stop!(w.scheduler)
+        w.window = nothing
+        w.app = nothing
+        w._box = nothing
+        w.context = nothing
+        denature!(w.catalyst)
     end
-    if !isnothing(w.window)
-        destroy(w.window)
-    end
-    stop!(w.scheduler)
-    w.window = nothing
-    w.app = nothing
-    w._box = nothing
-    denature!(w.catalyst)
     return
 end

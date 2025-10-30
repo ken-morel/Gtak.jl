@@ -1,0 +1,11 @@
+name = "Tod"
+uuid = "bbda86b0-90d6-44e8-8859-2abc1c785894"
+version = "0.1.0"
+authors = ["ken-morel <engonken8@gmail.com>"]
+
+[deps]
+Gtak = "9deccea8-f743-493b-a773-936bee031b92"
+Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
+
+[compat]
+Markdown = "1.11.0"
