@@ -41,6 +41,7 @@ Base.@kwdef mutable struct StaticPage <: AbstractPage
     onunmount::Union{Function, Nothing} = nothing
     context::Union{PageContext, Nothing} = nothing
     stylesheet::Union{Stylesheet, Nothing} = nothing
+    const _lock = ReentrantLock()
     """
         StaticPage(content::Components;kw...)
         StaticPage(
@@ -90,6 +91,7 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
     onunmount::Union{Function, Nothing}
     context::Union{PageContext, Nothing}
     stylesheet::Union{Stylesheet, Nothing} = nothing
+    const _lock = ReentrantLock()
 
     """
         ReloadablePage(builder::Function; kw...)
@@ -119,6 +121,7 @@ Base.@kwdef mutable struct ReloadablePage <: AbstractPage
             onunmount,
             content,
             stylesheet,
+            ReentrantLock(),
         )
 
         if isnothing(page.content)

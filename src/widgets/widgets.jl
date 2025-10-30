@@ -86,12 +86,6 @@ end
 
 function _updates(fn::Function, c::Component)
     @lock c begin
-        if ismounted(c)
-            println("Updating mounted $(typeof(c))")
-        else
-            println("Not mounted, cannot update $(typeof(c))")
-        end
-        println("And nothing: ", isnothing(c._widget))
         while !isempty(c._dirty)
             key = pop!(c._dirty)
             if key in _gtak_common
@@ -253,12 +247,9 @@ function Base.schedule(c::GtakComponent, task::Sched.AbstractPriorityTask)
     return schedule(p, task)
 end
 function getcomponentlayout(c::Component)
-    @lock c begin
+    return @lock c begin
         if hasproperty(c, :lay) && c.lay isa SubParams
             c.lay
-        else
-            SubParams()
         end
     end
-    return
 end

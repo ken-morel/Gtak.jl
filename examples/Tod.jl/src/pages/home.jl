@@ -34,7 +34,7 @@ function HomeContent(onmount::Function)
     Separator
     HPaned expand=true
       # Left Pane: Collections
-      Frame box:orient=O_V cssclasses=["collections-list"]
+      VBox cssclasses=["collections-list"]
         Label text="<b>Collections</b>"
         ScrolledWindow expand=(true, false)
           VBox

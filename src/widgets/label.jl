@@ -14,7 +14,6 @@ function mount!(l::Label, p::GtakComponent)::GtkLabel
     @lock l begin
         l._parent = p
         l._widget = GtkLabel(resolve(AbstractString, l.text))::GtkLabel
-        l._widget::GtkLabel
         _gtakwidgetmountcommon!(l, [])
         return l._widget
     end

@@ -9,6 +9,7 @@ Base.@kwdef mutable struct Stylesheet <: GtakComponent
     css::Union{String, Nothing} = nothing
     _provider::Union{GtkCssProvider, Nothing} = nothing
     _display::Union{Gtk4.GdkDisplay, Nothing} = nothing
+    const _lock = ReentrantLock()
 end
 
 macro stylesheet_str(code::String)

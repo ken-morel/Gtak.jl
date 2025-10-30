@@ -43,7 +43,7 @@ function LoginContent(onmount)
     return efus"""
     Box expand=true align=A_C
       Box cssclasses=["login-box"]
-        Frame
+        BoxFrame
           Grid expand=true margin=20 spacing=10
             Label text="Username: " lay:pos=(1,1)
             Entry text=name margin=(0,0,0,25) lay:pos=(1,2)

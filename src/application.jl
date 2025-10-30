@@ -13,8 +13,12 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     stores::Dict{Symbol, Atak.AbstractStoreNode} = Dict()
     data::Dict{Symbol, Any} = Dict()
     stylesheet::Union{Stylesheet, Nothing} = nothing
+    scheduler::Sched.Scheduler = Sched.Scheduler()
     const _lock = ReentrantLock()
 end
+
+Base.schedule(fn::Function, a::Application) = schedule!(fn, a.scheduler)
+Base.schedule(a::Application, t::Sched.AbstractPriorityTask) = schedule!(a.scheduler, t)
 
 configdirs(a::Application) = joinpath.(BaseDirs.config(), (a.id,))
 cachedir(a::Application) = joinpath(BaseDirs.cache(), a.id)
@@ -71,8 +75,10 @@ function IonicEfus.mount!(app::Application)::GtkApplication
     @lock app begin
         app.app = GtkApplication(app.id)
         signal_connect(app.app, :activate) do _
-            isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())
-            mount!.(app.windows, (app,))
+            @lock app begin
+                isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())
+                mount!.(app.windows, (app,))
+            end
         end
         return app.app
     end

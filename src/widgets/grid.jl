@@ -16,15 +16,15 @@ function mount!(g::Grid, p::GtakComponent)
 
         for child in g.children
             lay = getcomponentlayout(child)
-            if :pos in keys(lay)
+            if !isnothing(lay) && :pos in keys(lay)
                 if lay[:pos] isa Tuple && length(lay[:pos]) == 2
                     r, c = lay[:pos]
                     g._widget[c, r] = mount!(child, g)
                 else
-                    error("Invalid lay:pos field $(lay[:pos]) of type $(typeof(lay[:pos]))")
+                    @warn "Invalid lay:pos field $(lay[:pos]) of type $(typeof(lay[:pos]))"
                 end
             else
-                error("Grid child of type $(typeof(child)) has no lay:pos field")
+                @warn "Grid child of type $(typeof(child)) has no lay:pos field"
             end
         end
         return g._widget

@@ -42,46 +42,57 @@ and redisplays the first page.
 """
 function reload!(w::Window; all::Bool = false)
     return @lock w begin
+        println("Reloading window")
         page = reload!(w.router; all)
         if page isa AbstractPage
             show(w, page)
         end
+        println("Reloaded window")
     end
 end
 
 """
-    Base.show(w::Window, p::AbstractPage)
+    Base.show(w::Window, p::Union{AbstractPage, Nothing})
 
 Mount and display the page in the window,
 unmounting previously shown page.
 """
-function Base.show(w::Window, p::AbstractPage)
+function Base.show(w::Window, p::Union{AbstractPage, Nothing})
     @lock w begin
-        if p === w.current_page || isnothing(w.window)
+        println("Showing page")
+        if isnothing(w.window)
+            println("Not showing page")
             return
         end
 
         lastpage = w.current_page
-        if !isnothing(lastpage)
-            unmount!(lastpage)
-            stylesheet = getstylesheet(lastpage)
-            !isnothing(stylesheet) && unmount!(stylesheet)
+
+        widgets = if p !== w.current_page
+            w.current_page = p
+            widgets = isnothing(p) ? nothing : mount!(p, getcontext(w))
+
+            if !isnothing(lastpage)
+                unmount!(lastpage)
+                stylesheet = getstylesheet(lastpage)
+                !isnothing(stylesheet) && unmount!(stylesheet)
+            end
+            widgets
+        else
+            unmount!(p)
+            mount!(p, getcontext(w))
         end
         empty!(w._box) # Just in case
 
-        w.current_page = p
-        widgets = mount!(p, getcontext(w))
-
-
-        stylesheet = getstylesheet(p)
-        isnothing(stylesheet) || mount!(stylesheet, Gtk4.display(w.window))
-        println("Pushing widgets to window ", length(widgets))
-        isempty(widgets) || push!(w._box, widgets...)
-        isempty(widgets) && @warn "Showing empty page in window"
-        sleep(5)
+        if !isnothing(p)
+            stylesheet = getstylesheet(p)
+            isnothing(stylesheet) || mount!(stylesheet, Gtk4.display(w.window))
+            isempty(widgets) || push!(w._box, widgets...)
+            isempty(widgets) && @warn "Showing empty page in window"
+        end
         return widgets
     end
 end
+
 
 """
     window(init::Function, app::AbstractGtakApplication; args...)
