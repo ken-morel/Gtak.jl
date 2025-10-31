@@ -6,7 +6,7 @@ export Video
     loop::Union{MayBeReactive{Bool}, Nothing} = nothing
 end
 
-function mount!(v::GtkVideo, p::GtakComponent)
+function mount!(v::Video, p::GtakComponent)
     @lock v begin
         v._parent = p
         v._widget = GtkVideo()
