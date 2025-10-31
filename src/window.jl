@@ -42,12 +42,10 @@ and redisplays the first page.
 """
 function reload!(w::Window; all::Bool = false)
     return @lock w begin
-        println("Reloading window")
         page = reload!(w.router; all)
         if page isa AbstractPage
             show(w, page)
         end
-        println("Reloaded window")
     end
 end
 
@@ -59,11 +57,7 @@ unmounting previously shown page.
 """
 function Base.show(w::Window, p::Union{AbstractPage, Nothing})
     @lock w begin
-        println("Showing page")
-        if isnothing(w.window)
-            println("Not showing page")
-            return
-        end
+        isnothing(w.window)&&return
 
         lastpage = w.current_page
 
@@ -104,7 +98,7 @@ to manually be mounted in the init!, the init
 can return a page which will be shown on the window.
 """
 function window(init::Function, app::AbstractGtakApplication; args...)
-    win = Window(; app, args...)
+    win = Window(; app, scheduler = app.scheduler, args...)
     @lock win begin
         page = init(win)
         if page isa AbstractPage

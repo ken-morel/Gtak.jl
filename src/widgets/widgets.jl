@@ -34,75 +34,81 @@ const _gtak_common = Set(
     ]
 )
 function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: GtakComponent}
-    @lock c begin
-        if k == :margin
-            if length(v) == 1
-                w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
-            elseif length(v) == 2
-                w.margin_top, w.margin_start = v
-                w.margin_bottom, w.margin_end = v
-            elseif length(v) == 4
-                w.margin_top, w.margin_end, w.margin_bottom, w.margin_start = v
-            else
-                @warn "Component of type $C Invalid margin $v"
-            end
-        elseif k == :align
-            if v isa Tuple
-                v, h = v
-                isnothing(v) || setproperty!(w, :valign, v)
-                isnothing(h) || setproperty!(w, :halign, h)
-            else
-                w.valign = w.halign = v
-            end
-        elseif k == :expand
-            if length(v) == 1
-                w.hexpand = w.vexpand = v
-            elseif length(v) == 2
-                w.vexpand, w.hexpand = v
-            else
-                @warn "Component of type $C received invalid expand $v"
-            end
-        elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible, :width_request, :height_request])
-            setproperty!(w, k, v)
-            w.tooltip_markup = v
-        elseif k == :cssclasses
-            Gtk4.css_classes(w, v)
-        elseif k == :cssname
-            Gtk4.css_name(w, v)
-        elseif k == :hasfocus
-            if v
-                Gtk4.grab_focus(w)
-            else
-                toplevel = Gtk4.Gtk.toplevel(w)
-                if toplevel isa Gtk4.GtkWindow
-                    toplevel.focus = nothing
-                end
+    if k == :margin
+        if length(v) == 1
+            w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
+        elseif length(v) == 2
+            w.margin_top, w.margin_start = v
+            w.margin_bottom, w.margin_end = v
+        elseif length(v) == 4
+            w.margin_top, w.margin_end, w.margin_bottom, w.margin_start = v
+        else
+            @warn "Component of type $C Invalid margin $v"
+        end
+    elseif k == :align
+        if v isa Tuple
+            v, h = v
+            isnothing(v) || setproperty!(w, :valign, v)
+            isnothing(h) || setproperty!(w, :halign, h)
+        else
+            w.valign = w.halign = v
+        end
+    elseif k == :expand
+        if length(v) == 1
+            w.hexpand = w.vexpand = v
+        elseif length(v) == 2
+            w.vexpand, w.hexpand = v
+        else
+            @warn "Component of type $C received invalid expand $v"
+        end
+    elseif k in Set([:canfocus, :opacity, :sensitive, :cursor, :visible, :width_request, :height_request])
+        setproperty!(w, k, v)
+        w.tooltip_markup = v
+    elseif k == :cssclasses
+        Gtk4.css_classes(w, v)
+    elseif k == :cssname
+        Gtk4.css_name(w, v)
+    elseif k == :hasfocus
+        if v
+            Gtk4.grab_focus(w)
+        else
+            toplevel = Gtk4.Gtk.toplevel(w)
+            if toplevel isa Gtk4.GtkWindow
+                toplevel.focus = nothing
             end
         end
-
     end
+
     return
 end
 
 function _updates(fn::Function, c::Component)
     @lock c begin
-        while !isempty(c._dirty)
-            key = pop!(c._dirty)
-            if key in _gtak_common
-                val = getproperty(c, key)
+        done = Threads.Condition()
+        Gtk4.g_idle_add() do
+            if ismounted(c)
+                while !isempty(c._dirty)
+                    key = pop!(c._dirty)
+                    if key in _gtak_common
+                        val = getproperty(c, key)
 
-                isnothing(val) || _gtakwidgetupdatecommon(
-                    c,
-                    c._widget,
-                    key,
-                    resolve(val)
-                )
-            else
-                fn(key)
+                        isnothing(val) || _gtakwidgetupdatecommon(
+                            c,
+                            c._widget,
+                            key,
+                            resolve(val)
+                        )
+                    else
+                        fn(key)
+                    end
+                end
             end
+            @lock done notify(done)
+            false
         end
+        return
+        wait(done)
     end
-    return
 end
 update!(c::GtakComponent) = _updates(identity, c)
 function _gtakwidgetmountcommon!(c, donttrack::Vector)

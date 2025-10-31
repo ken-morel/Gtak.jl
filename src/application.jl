@@ -75,6 +75,7 @@ signal to mount it's windows when
 """
 function IonicEfus.mount!(app::Application)::GtkApplication
     @lock app begin
+        Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
         signal_connect(app.app, :activate) do _
             @lock app begin
@@ -100,6 +101,8 @@ function IonicEfus.unmount!(app::Application)
             destroy(app.app)
         end
         app.app = nothing
+
+        Sched.stop!(app.scheduler)
     end
     return
 end
