@@ -27,7 +27,7 @@ cachedir(a::Application) = joinpath(BaseDirs.cache(), a.id)
 Base.push!(app::Application, win::AbstractGtakWindow) = @lock app push!(app.windows, win)
 
 """
-    application(init::Function, id::String)
+    application([init::Function,] id::String)
 
 Create the application, initialize using the
 passed function and then mount the application
@@ -38,6 +38,8 @@ function application(init::Function, id::String; args...)
     @lock app init(app)
     return app
 end
+
+application(id::String; args...) = Application(; id, args...)
 
 """
     reload!(a::Application; all = false)
@@ -73,6 +75,7 @@ signal to mount it's windows when
 """
 function IonicEfus.mount!(app::Application)::GtkApplication
     @lock app begin
+        Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
         signal_connect(app.app, :activate) do _
             @lock app begin
@@ -98,6 +101,8 @@ function IonicEfus.unmount!(app::Application)
             destroy(app.app)
         end
         app.app = nothing
+
+        Sched.stop!(app.scheduler)
     end
     return
 end

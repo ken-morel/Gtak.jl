@@ -1,10 +1,10 @@
 export Scale
 
 @gtakwidgetcomponent Scale begin
-    value::MayBeReactive{Float64} = 0.0
-    min::MayBeReactive{Float64} = 0.0
-    max::MayBeReactive{Float64} = 100.0
-    step::MayBeReactive{Float64} = 1.0
+    value::MayBeReactive{<:Real} = 0.0
+    min::MayBeReactive{<:Real} = 0.0
+    max::MayBeReactive{<:Real} = 100.0
+    step::MayBeReactive{<:Real} = 1.0
     orient::Gtk4.Orientation = O_H
     onchange::Union{Function, Nothing} = nothing
 
@@ -50,16 +50,16 @@ function update!(s::Scale)
         adj = Gtk4.adjustment(s._widget)
         if dirt == :value
             trylock(s._valuelock) && try
-                Gtk4.value(adj, resolve(Float64, s.value))
+                Gtk4.value(adj, resolve(s.value))
             finally
                 unlock(s._valuelock)
             end
         elseif dirt == :min
-            Gtk4.lower(adj, resolve(Float64, s.min))
+            Gtk4.lower(adj, resolve(s.min))
         elseif dirt == :max
-            Gtk4.upper(adj, resolve(Float64, s.max))
+            Gtk4.upper(adj, resolve(s.max))
         elseif dirt == :step
-            Gtk4.step_increment(adj, resolve(Float64, s.step))
+            Gtk4.step_increment(adj, resolve(s.step))
         end
     end
 end

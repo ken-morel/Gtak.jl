@@ -42,12 +42,10 @@ and redisplays the first page.
 """
 function reload!(w::Window; all::Bool = false)
     return @lock w begin
-        println("Reloading window")
         page = reload!(w.router; all)
         if page isa AbstractPage
             show(w, page)
         end
-        println("Reloaded window")
     end
 end
 
@@ -59,11 +57,7 @@ unmounting previously shown page.
 """
 function Base.show(w::Window, p::Union{AbstractPage, Nothing})
     @lock w begin
-        println("Showing page")
-        if isnothing(w.window)
-            println("Not showing page")
-            return
-        end
+        isnothing(w.window)&&return
 
         lastpage = w.current_page
 
@@ -95,7 +89,7 @@ end
 
 
 """
-    window(init::Function, app::AbstractGtakApplication; args...)
+    window([init::Function,] app::AbstractGtakApplication; args...)
 
 Helper which creates the window, calls the init on it and
 adds the window to the app, if the app was already
@@ -104,7 +98,7 @@ to manually be mounted in the init!, the init
 can return a page which will be shown on the window.
 """
 function window(init::Function, app::AbstractGtakApplication; args...)
-    win = Window(; app, args...)
+    win = Window(; app, scheduler = app.scheduler, args...)
     @lock win begin
         page = init(win)
         if page isa AbstractPage
@@ -116,6 +110,7 @@ function window(init::Function, app::AbstractGtakApplication; args...)
     end
     return win
 end
+window(app::AbstractGtakApplication; args...) = Window(; app, args...)
 
 """
     IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow

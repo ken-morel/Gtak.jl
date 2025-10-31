@@ -1,85 +1,88 @@
-function HomeContent(onmount::Function)
-    username = Reactant("")
-    user = nothing
+username = Reactant("Ken")
+user = nothing
 
-    # Collections state
-    collections = Reactant(Collection[])
-    colentry = Reactant("")
-    selected_collection = Reactant{Union{Collection, Nothing}}(nothing)
+# Collections state
+collections = Reactant(Collection[])
+colentry = Reactant("")
+selected_collection = Reactant{Union{Collection, Nothing}}(nothing)
 
-    # Todos state
-    todos = Reactant(Todo[])
-    todoentry = Reactant("")
+# Todos state
+todos = Reactant(Todo[])
+todoentry = Reactant("")
 
-    # Filtered todos based on the selected collection
-    filtered_todos = @reactor begin
-        isnothing(selected_collection') ? Todo[] :
-            filter(t -> t.collectionid == selected_collection'.id, todos')
-    end
+# Filtered todos based on the selected collection
+filtered_todos = @reactor begin
+    isnothing(selected_collection') ? Todo[] :
+        filter(t -> t.collectionid == selected_collection'.id, todos')
+end
 
-    onmount() do _, ctx
-        user = getdata(ctx)[:user]
-        @ionic begin
-            username' = user.name
-            collections' = getstores(ctx)[:collections]'
-            todos' = getstores(ctx)[:todos]'
-        end
-        # Persist changes back to the store
+function inithome(_, ctx)
+    if isnothing(user)
         @radical getstores(ctx)[:collections]' = collections'
         @radical getstores(ctx)[:todos]' = todos'
     end
+    global user = getdata(ctx)[:user]
+    @ionic begin
+        username' = user.name
+        collections' = getstores(ctx)[:collections]'
+        todos' = getstores(ctx)[:todos]'
+    end
+    # Persist changes back to the store
 
-    return efus"""
-    Label text="<big>Hello $(username')</big>, welcome to your Todolist" margin=10
-    Separator
-    HPaned expand=true
-      # Left Pane: Collections
-      VBox cssclasses=["collections-list"]
-        Label text="<b>Collections</b>"
-        ScrolledWindow expand=(true, false)
-          VBox
-            For items=collections
-              builder(coll)
-                Button text=(coll.name) cssclasses=["collection-button"] onclick=() -> (selected_collection'=coll)
-              end
-        HBox expand=(false, true)
-          Entry text=colentry placeholder="New Collection"
-          Button text="Add" onclick=()->(
-            push!(collections', Collection(userid=user.id, name=colentry'));
-            notify(collections);
-            colentry' = ""
-          )
-      # Right Pane: Todos
-      VBox expand=true
-        Switched value=(!isnothing(selected_collection'))::Bool box:expand=true
-          builder()
-            if !isnothing(selected_collection')
-              Label text=("<big><b>$(selected_collection'.name)</b></big>")::String margin=10
-              ScrolledWindow expand=true
-                VBox expand=true
-                  For items=filtered_todos
-                    builder(todo)
-                      Frame cssclasses=["todo-item"] expand=(false, true)
-                        Label text=(
-                          try
-                            todo.text |> Markdown.parse |> Markdown.html |> (t) -> t[4:end-5]
-                          catch
-                            todo.text  * "error"
-                          end
-                        ) margin=15
-                    end
-              HBox expand=(false, true)
-                Entry text=todoentry placeholder="New Todo"
-                Button text="Add" onclick=() -> (
-                  push!(todos', Todo(collectionid=selected_collection'.id, text=todoentry'));
-                  notify(todos);
-                  todoentry' = ""
-                )
-            else
-              Label text="Select a collection to start" margin=50
-            end
-          end
-    """
+    return
 end
 
-const Home = ReloadablePage(HomeContent)
+HomeContent = efus"""
+Label text=("<big>Hello $(username')</big>, welcome to your Todolist")::String margin=10
+Separator
+Separator
+HPaned expand=true
+  # Left Pane: Collections
+  VBox cssclasses=["collections-list"]
+    Label text="<b>Collections</b>"
+    ScrolledWindow expand=(true, false)
+      VBox
+        For items=collections
+          builder(coll)
+            Button text=(coll.name) cssclasses=["collection-button"] onclick=() -> (selected_collection'=coll)
+          end
+    HBox expand=(false, true)
+      Entry text=colentry placeholder="New Collection"
+      Button text="Add" onclick=()->(
+        push!(collections', Collection(userid=user.id, name=colentry'));
+        notify(collections);
+        colentry' = ""
+      )
+  # Right Pane: Todos
+  VBox expand=true
+    Switched value=(!isnothing(selected_collection'))::Bool box:expand=true
+      builder()
+        if !isnothing(selected_collection')
+          Label text=("<big><b>$(selected_collection'.name)</b></big>")::String margin=10
+          ScrolledWindow expand=true
+            VBox expand=true
+              For items=filtered_todos
+                builder(todo)
+                  Frame cssclasses=["todo-item"] expand=(false, true)
+                    Label text=(
+                      try
+                        todo.text |> Markdown.parse |> Markdown.html |> (t) -> t[4:end-5]
+                      catch
+                        todo.text  * "error"
+                      end
+                    ) margin=15
+                end
+          HBox expand=(false, true)
+            Entry text=todoentry placeholder="New Todo"
+            Button text="Add" onclick=() -> (
+              push!(todos', Todo(collectionid=selected_collection'.id, text=todoentry'));
+              notify(todos);
+              todoentry' = ""
+            )
+        else
+          Label text="Select a collection to start" margin=50
+        end
+      end
+"""
+
+const Home = ReloadablePage((o) -> (o(inithome); HomeContent))

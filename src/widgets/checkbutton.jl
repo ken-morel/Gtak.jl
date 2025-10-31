@@ -3,6 +3,7 @@ export CheckButton
 @gtakwidgetcomponent CheckButton  begin
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
+    label::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
 
     const children::Components = []
     const _valuelock = ReentrantLock()
@@ -15,6 +16,7 @@ function mount!(c::CheckButton, p::GtakComponent)
         c._parent = p
         c._widget = GtkCheckButton()
         c._widget.active = resolve(c.value)
+
         _gtakwidgetmountcommon!(c, [])
         if !isempty(c.children)
             c._widget[] = mount!(c.children[1])
@@ -48,7 +50,9 @@ end
 function update!(c::CheckButton)
     return _updates(c) do dirt
         if dirt == :value
-            c.active = resolve(Bool, c.value)
+            c._widget.active = resolve(c.value)
+        elseif dirt == :label && !isnothing(c.label)
+            c._widget.label = resolve(c.label)
         end
     end
 end
