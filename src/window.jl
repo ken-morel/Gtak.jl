@@ -54,9 +54,7 @@ Mount and display the page in the window,
 unmounting previously shown page.
 """
 function Base.show(w::Window, p::Union{AbstractPage, Nothing})
-    println("Starting Showing page")
     @lock w begin
-        println("Showing page on ")
         isnothing(w.window) && return
 
         lastpage = w.current_page
@@ -75,7 +73,6 @@ function Base.show(w::Window, p::Union{AbstractPage, Nothing})
             unmount!(p)
             mount!(p, getcontext(w))
         end
-        println("Mounted page, showing i")
         empty!(w._box) # Just in case
 
         if !isnothing(p)
@@ -118,7 +115,6 @@ Mounts the window in the application returning
 the underlying gtk widget.
 """
 function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
-    println("Starting to mount window")
     @lock w begin
         w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
         w.app = app
@@ -126,23 +122,20 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
         w._box = GtkBox(:v; hexpand = true, vexpand = true)
         w.window[] = w._box
         start!(w.scheduler)
+
+        # Set and show the initial page synchronously
         page = getvalue(w.router.current_page)
+        w.current_page = page
         if page isa AbstractPage
-            println("Schedulig to show the current window page")
-            schedule!(getscheduler(w)) do
-                println("Showing the current window page on moun!")
-                show(w, page)
-                println("Showed he current window page on moun!")
-            end
+            show(w, page)
         end
+
+        # Now, set up the reactive listener for subsequent page changes
         catalyze!(w.catalyst, w.router.current_page) do r
-            println("Router page changed, scheduling updae")
             page = getvalue(r)
             if !isnothing(page)
                 schedule!(getscheduler(w)) do
-                    println("Updating changed router page")
                     show(w, page)
-                    println("Updated changed router page")
                 end
             end
         end

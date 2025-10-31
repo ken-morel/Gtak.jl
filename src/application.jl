@@ -74,24 +74,18 @@ signal to mount it's windows when
 `activate` signal received.
 """
 function IonicEfus.mount!(app::Application)::GtkApplication
-    println("Starting to moun the app")
     @lock app begin
-        println("mounting the app")
         Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
         signal_connect(app.app, :activate) do _
-            println("App activated, mouning app windows")
             windows = @lock app begin
                 isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())
                 copy(app.windows)
             end
-            println("Mounting windows")
             for window in windows
                 mount!(window, app)
             end
-            println("Mouted app windows")
         end
-        println("Mounted the app")
         return app.app
     end
 end
