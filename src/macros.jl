@@ -27,13 +27,14 @@ macro reloadablepage(code::AbstractString, cb = nothing)
     end
 end
 
-macro builder_str(code::AbstractString)
-    gen = generate(IonicEfus.parse_efus(code, "<builder macro at $(__source__.file):$(__source__.line)"))
-    builder = quote
-        $PageBuilder((ctx) -> $gen)
-    end
+macro reloadablepage_str(code::AbstractString)
+    gen = IonicEfus.parse_efus(
+        code, "<reloadable macro at $(__source__.file):$(__source__.line)",
+    ) |> generate |> esc
     return quote
         $(LineNumberNode(__source__.line, __source__.file))
-        $(esc(builder))
+        $ReloadablePage() do onmount
+            $gen
+        end
     end
 end

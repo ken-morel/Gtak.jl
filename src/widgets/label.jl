@@ -1,7 +1,7 @@
 export Label
 
 @gtakwidgetcomponent Label begin
-    text::MayBeReactive{String} = ""
+    text::MayBeReactive{<:AbstractString} = ""
     usemarkup::MayBeReactive{Bool} = true
     selectable::Union{MayBeReactive{Bool}, Nothing} = nothing
     justify::Union{MayBeReactive{Gtk4.Justification}, Nothing} = nothing
@@ -22,17 +22,17 @@ end
 function update!(l::Label)
     return _updates(l) do dirt
         if dirt == :text
-            l._widget.label = resolve(String, l.text)
+            l._widget.label = resolve(l.text)
         elseif dirt == :selectable && !isnothing(l.selectable)
-            l._widget.selectable = resolve(Bool, l.selectable)
+            l._widget.selectable = resolve(l.selectable)
         elseif dirt == :justify && !isnothing(l.justify)
             l._widget.justify = resolve(Gtk4.Justification, l.justify)
         elseif dirt == :wrap && !isnothing(l.wrap)
-            l._widget.wrap = resolve(Bool, l.wrap)
+            l._widget.wrap = resolve(l.wrap)
         elseif dirt == :wrapmode && !isnothing(l.wrapmode)
             l._widget.wrap_mode = resolve(Gtk4.WrapMode, l.wrapmode)
         elseif dirt == :usemarkup
-            l._widget.use_markup = resolve(Bool, l.usemarkup)
+            l._widget.use_markup = resolve(l.usemarkup)
         end
     end
 end

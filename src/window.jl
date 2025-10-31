@@ -41,13 +41,9 @@ if `all`, then reloads also the history stack
 and redisplays the first page.
 """
 function reload!(w::Window; all::Bool = false)
-    return @lock w begin
-        println("Reloading window")
-        page = reload!(w.router; all)
-        if page isa AbstractPage
-            show(w, page)
-        end
-        println("Reloaded window")
+    page = reload!(w.router; all)
+    return if page isa AbstractPage
+        show(w, page)
     end
 end
 
@@ -59,11 +55,7 @@ unmounting previously shown page.
 """
 function Base.show(w::Window, p::Union{AbstractPage, Nothing})
     @lock w begin
-        println("Showing page")
-        if isnothing(w.window)
-            println("Not showing page")
-            return
-        end
+        isnothing(w.window) && return
 
         lastpage = w.current_page
 
@@ -95,7 +87,7 @@ end
 
 
 """
-    window(init::Function, app::AbstractGtakApplication; args...)
+    window([init::Function,] app::AbstractGtakApplication; args...)
 
 Helper which creates the window, calls the init on it and
 adds the window to the app, if the app was already
@@ -104,18 +96,17 @@ to manually be mounted in the init!, the init
 can return a page which will be shown on the window.
 """
 function window(init::Function, app::AbstractGtakApplication; args...)
-    win = Window(; app, args...)
-    @lock win begin
-        page = init(win)
-        if page isa AbstractPage
-            push!(win.router, page)
-        elseif page isa PageBuilder
-            push!(win.router, page())
-        end
-        push!(app, win)
+    win = Window(; app, scheduler = app.scheduler, args...)
+    page = init(win)
+    if page isa AbstractPage
+        push!(win.router, page)
+    elseif page isa PageBuilder
+        push!(win.router, page())
     end
+    push!(app, win)
     return win
 end
+window(app::AbstractGtakApplication; args...) = Window(; app, args...)
 
 """
     IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
@@ -131,14 +122,19 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
         w._box = GtkBox(:v; hexpand = true, vexpand = true)
         w.window[] = w._box
         start!(w.scheduler)
+
+        # Set and show the initial page synchronously
         page = getvalue(w.router.current_page)
+        w.current_page = page
         if page isa AbstractPage
             show(w, page)
         end
+
+        # Now, set up the reactive listener for subsequent page changes
         catalyze!(w.catalyst, w.router.current_page) do r
             page = getvalue(r)
             if !isnothing(page)
-                schedule!(getscheduler(w), Sched.High) do
+                schedule!(getscheduler(w)) do
                     show(w, page)
                 end
             end

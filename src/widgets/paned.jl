@@ -2,7 +2,7 @@ export Paned, HPaned, VPaned
 
 @gtakwidgetcomponent Paned begin
     orient::Gtk4.Orientation = O_H
-    position::Union{MayBeReactive{Int}, Nothing} = nothing
+    position::Union{MayBeReactive{<:Integer}, Nothing} = nothing
     wide_handle::Union{MayBeReactive{Bool}, Nothing} = nothing
 
     const children::Components = []
@@ -34,9 +34,9 @@ end
 function update!(pn::Paned)
     return _updates(pn) do dirt
         if dirt == :position && !isnothing(pn.position)
-            pn._widget.position = resolve(Int, pn.position)
+            pn._widget.position = resolve(pn.position)
         elseif dirt == :wide_handle && !isnothing(pn.wide_handle)
-            pn._widget.wide_handle = resolve(Bool, pn.wide_handle)
+            pn._widget.wide_handle = resolve(pn.wide_handle)
         end
     end
 end

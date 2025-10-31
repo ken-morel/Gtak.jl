@@ -1,10 +1,10 @@
 export Entry
 
 @gtakwidgetcomponent Entry  begin
-    text::MayBeReactive{String} = ""
-    placeholder::MayBeReactive{String} = ""
+    text::MayBeReactive{<:AbstractString} = ""
+    placeholder::MayBeReactive{<:AbstractString} = ""
     onchange::Union{Function, Nothing} = nothing
-    name::Union{MayBeReactive{String}, Nothing} = nothing
+    name::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
 
     _changed_handler_id::UInt = 0
 
@@ -15,7 +15,7 @@ end
 function mount!(e::Entry, p::GtakComponent)
     @lock e begin
         e._parent = p
-        e._widget = GtkEntry(text = resolve(String, e.text))
+        e._widget = GtkEntry(text = resolve(e.text))
         _gtakwidgetmountcommon!(e, [:text])
         if e.text isa AbstractReactive
             catalyze!(e._catalyst, e.text) do r
@@ -57,9 +57,9 @@ end
 function update!(e::Entry)
     return _updates(e) do dirt
         if dirt == :placeholder
-            e._widget.placeholder_text = resolve(String, e.placeholder)
+            e._widget.placeholder_text = resolve(e.placeholder)
         elseif dirt == :name && !isnothing(e.name)
-            e._widget.name = resolve(String, e.name)
+            e._widget.name = resolve(e.name)
         end
     end
 end

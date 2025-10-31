@@ -1,8 +1,8 @@
 export ComboBoxText
 
 @gtakwidgetcomponent ComboBoxText begin
-    items::MayBeReactive{Vector{String}} = String[]
-    active::MayBeReactive{Int} = -1 # Gtk default is -1 for no active item
+    items::MayBeReactive{<:AbstractVector{<:AbstractString}} = String[]
+    active::MayBeReactive{<:Integer} = -1 # Gtk default is -1 for no active item
     onchange::Union{Function, Nothing} = nothing
 
     _signal_id::UInt = 0
@@ -45,18 +45,18 @@ function update!(cbt::ComboBoxText)
     return _updates(cbt) do dirt
         if dirt == :items
             Gtk4.remove_all(cbt._widget)
-            for item in resolve(Vector{String}, cbt.items)
+            for item in resolve(cbt.items)
                 Gtk4.push_text(cbt._widget, item)
             end
             # After updating items, we might need to reset the active item
             trylock(cbt._activelock) && try
-                Gtk4.active(cbt._widget, resolve(Int, cbt.active))
+                Gtk4.active(cbt._widget, resolve(cbt.active))
             finally
                 unlock(cbt._activelock)
             end
         elseif dirt == :active
             trylock(cbt._activelock) && try
-                Gtk4.active(cbt._widget, resolve(Int, cbt.active))
+                Gtk4.active(cbt._widget, resolve(cbt.active))
             finally
                 unlock(cbt._activelock)
             end

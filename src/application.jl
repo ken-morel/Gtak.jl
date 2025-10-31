@@ -27,7 +27,7 @@ cachedir(a::Application) = joinpath(BaseDirs.cache(), a.id)
 Base.push!(app::Application, win::AbstractGtakWindow) = @lock app push!(app.windows, win)
 
 """
-    application(init::Function, id::String)
+    application([init::Function,] id::String)
 
 Create the application, initialize using the
 passed function and then mount the application
@@ -35,9 +35,11 @@ and return it.
 """
 function application(init::Function, id::String; args...)
     app = Application(; id, args...)
-    @lock app init(app)
+    init(app)
     return app
 end
+
+application(id::String; args...) = Application(; id, args...)
 
 """
     reload!(a::Application; all = false)
@@ -45,7 +47,7 @@ end
 Trigger reload of the current page or
 all pages of the windows of the application.
 """
-reload!(a::Application; all = false) = @lock a foreach(w -> reload!(w; all), a.windows)
+reload!(a::Application; all = false) = foreach(w -> reload!(w; all), @lock a copy(a.windows))
 
 """
     Base.run(app::Application)
@@ -73,11 +75,15 @@ signal to mount it's windows when
 """
 function IonicEfus.mount!(app::Application)::GtkApplication
     @lock app begin
+        Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
         signal_connect(app.app, :activate) do _
-            @lock app begin
+            windows = @lock app begin
                 isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())
-                mount!.(app.windows, (app,))
+                copy(app.windows)
+            end
+            for window in windows
+                mount!(window, app)
             end
         end
         return app.app
@@ -92,12 +98,15 @@ and destroy the app.
 """
 function IonicEfus.unmount!(app::Application)
     @lock app begin
+
         unmount!.(app.windows)
-        isnothing(app.stylesheet) ||unmount!(app.stylesheet)
+        isnothing(app.stylesheet) || unmount!(app.stylesheet)
         if !isnothing(app.app)
             destroy(app.app)
         end
         app.app = nothing
+
+        Sched.stop!(app.scheduler)
     end
     return
 end

@@ -1,7 +1,7 @@
 export Notebook
 
 @gtakwidgetcomponent Notebook begin
-    page::MayBeReactive{Int} = 0
+    page::MayBeReactive{<:Integer} = 0
     onswitch::Union{Function, Nothing} = nothing
 
     const children::Components = []
@@ -50,7 +50,7 @@ end
 function update!(n::Notebook)
     return _updates(n) do dirt
         if dirt == :page
-            Gtk4.page(n._widget, resolve(Int, n.page))
+            Gtk4.page(n._widget, resolve(n.page))
         end
     end
 end
