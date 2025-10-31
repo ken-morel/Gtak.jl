@@ -97,21 +97,22 @@ Here’s how you can set it up, based on the `Tod.jl` example:
    const app = Tod.createapplication()
 
    errormonitor(
-       Threads.@spawn Revise.entr([], [Tod];postpone=true) do
-           try
-               println("Reloading in...")
-               @time Tod.Gtak.reload!(app; all = true)
-           catch e
-               showerror(stderr, e)
-           end
-       end
-   )
+     @async Revise.entr(
+        () -> schedule(
+            () -> Tod.Gtak.reload!(app; all = true),
+            app,
+        ),
+        [],
+        [Tod];
+        postpone=true,
+     )
+    )
 
    run(app)
    ```
 
    This script uses `Revise.entr` to monitor your project's files. When a file is saved, it calls `Gtak.reload!(app; all=true)`, which reloads all `ReloadablePage`s in your application.
-   Notice that we are using `@spawn` and not `@async`, this is because, without the `postpone=true`, the app is reloaded almost as soon as it is ran, and the task scheduled, which will cause the mounting page to unmount, and since components are thread-safe, but not task-safe, it may cause a bad type of breakages.
+   Notice that we are scheduling the reload, so that it happens on another thread, and not the same one where it is mounted as will normally be done with `@async`, and cause the locks not to prevent mounting(app startup) and unmounting(app reload) occuring at the same time, if `postpone` is ommited.
 
 2. **Define your pages as `ReloadablePage`s**:
 

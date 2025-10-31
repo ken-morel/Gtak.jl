@@ -4,6 +4,7 @@ export Switch
     value::MayBeReactive{Bool} = false
     ontoggle::Union{Function, Nothing} = nothing
 
+    _signal_id::UInt = 0
     const children::Components = []
     const _valuelock = ReentrantLock()
 end
@@ -17,7 +18,7 @@ function mount!(c::Switch, p::GtakComponent)
         if !isempty(c.children)
             c._widget[] = mount!(c.children[1])
         end
-        signal_connect(c._widget, "toggled") do _
+        c._signal_id = signal_connect(c._widget, "toggled") do _
             if !isnothing(c.ontoggle)
                 schedule(
                     c, Sched.CallbackCall(c.ontoggle, Sched.UserInteractive) do

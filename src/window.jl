@@ -95,7 +95,7 @@ end
 
 
 """
-    window(init::Function, app::AbstractGtakApplication; args...)
+    window([init::Function,] app::AbstractGtakApplication; args...)
 
 Helper which creates the window, calls the init on it and
 adds the window to the app, if the app was already
@@ -116,6 +116,7 @@ function window(init::Function, app::AbstractGtakApplication; args...)
     end
     return win
 end
+window(app::AbstractGtakApplication; args...) = Window(; app, args...)
 
 """
     IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow

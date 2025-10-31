@@ -1,8 +1,8 @@
 export LinkButton
 
 @gtakwidgetcomponent LinkButton  begin
-    uri::MayBeReactive{String}
-    text::Union{MayBeReactive{String}, Nothing} = nothing
+    uri::MayBeReactive{<:AbstractString}
+    text::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
 end
 
 function mount!(lb::LinkButton, p::GtakComponent)
@@ -17,9 +17,9 @@ end
 function update!(l::LinkButton)
     return _updates(l) do dirt
         if dirt == :uri
-            l._widget.uri = resolve(String, l.uri)
+            l._widget.uri = resolve(l.uri)
         elseif dirt == :text && !isnothing(l.text)
-            l._widget.label = resolve(String, l.text)
+            l._widget.label = resolve(l.text)
         end
     end
 end

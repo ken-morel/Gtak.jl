@@ -1,7 +1,7 @@
 export TextView
 
 @gtakwidgetcomponent TextView begin
-    text::MayBeReactive{String} = ""
+    text::MayBeReactive{<:AbstractString} = ""
     editable::Union{MayBeReactive{Bool}, Nothing} = nothing
     monospace::Union{MayBeReactive{Bool}, Nothing} = nothing
     onchange::Union{Function, Nothing} = nothing
@@ -16,7 +16,7 @@ function mount!(tv::TextView, p::GtakComponent)
         tv._parent = p
         tv._widget = GtkTextView()
         tv._buffer = Gtk4.buffer(tv._widget)
-        tv._buffer.text = resolve(String, tv.text)
+        tv._buffer.text = resolve(tv.text)
         _gtakwidgetmountcommon!(tv, [:text])
 
         if tv.text isa AbstractReactive
@@ -59,9 +59,9 @@ end
 function update!(tv::TextView)
     return _updates(tv) do dirt
         if dirt == :editable && !isnothing(tv.editable)
-            tv._widget.editable = resolve(Bool, tv.editable)
+            tv._widget.editable = resolve(tv.editable)
         elseif dirt == :monospace && !isnothing(tv.monospace)
-            tv._widget.monospace = resolve(Bool, tv.monospace)
+            tv._widget.monospace = resolve(tv.monospace)
         end
     end
 end

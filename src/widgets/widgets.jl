@@ -6,7 +6,7 @@ macro gtakwidgetcomponent(name::Symbol, block)
     return esc(
         quote
             @gtakcomponent $name <: GtakWidgetComponent  begin
-                opacity::Union{MayBeReactive{Float64}, Nothing} = nothing
+                opacity::Union{MayBeReactive{<:Real}, Nothing} = nothing
                 margin::Union{MayBeReactive{Union{Int, NTuple{2, Int}, NTuple{4, Int}}}, Nothing} = nothing
                 align::Union{MayBeReactive{<:Union{<:NTuple{2, Union{Gtk4.Align, Nothing}}, Gtk4.Align}}, Nothing} = nothing
                 expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
@@ -14,12 +14,12 @@ macro gtakwidgetcomponent(name::Symbol, block)
                 hasfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
                 cursor::Union{MayBeReactive{GdkCursor}, Nothing} = nothing
                 sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
-                tooltip::Union{MayBeReactive{String}, Nothing} = nothing
+                tooltip::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
                 visible::Union{MayBeReactive{Bool}, Nothing} = nothing
-                cssclasses::Union{MayBeReactive{Vector{String}}, Nothing} = nothing
-                cssname::Union{MayBeReactive{String}, Nothing} = nothing
-                width_request::Union{MayBeReactive{Int}, Nothing} = nothing
-                height_request::Union{MayBeReactive{Int}, Nothing} = nothing
+                cssclasses::Union{MayBeReactive{<:AbstractVector{<:AbstractString}}, Nothing} = nothing
+                cssname::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
+                width_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
+                height_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
                 lay::SubParams = SubParams()
                 $(LineNumberNode(__source__.line, __source__.file))
                 $block
@@ -95,9 +95,7 @@ function _updates(fn::Function, c::Component)
                     c,
                     c._widget,
                     key,
-                    val isa AbstractReactive
-                        ? getvalue(val)
-                        : val
+                    resolve(val)
                 )
             else
                 fn(key)

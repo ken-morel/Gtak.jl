@@ -1,9 +1,9 @@
 export Button
 
 @gtakwidgetcomponent Button  begin
-    text::MayBeReactive{String} = ""
+    text::MayBeReactive{<:AbstractString} = ""
     onclick::Union{Function, Nothing} = nothing
-    actionname::Union{String, Nothing} = nothing
+    actionname::Union{<:AbstractString, Nothing} = nothing
 
     _label::Union{GtkLabel, Nothing} = nothing
     _handler_id::UInt = 0
@@ -21,7 +21,7 @@ function mount!(b::Button, p::GtakComponent)
             b._widget.action_name = b.actionname
         end
         if isempty(b.children)
-            b._widget[] = b._label = GtkLabel(resolve(String, b.text))
+            b._widget[] = b._label = GtkLabel(resolve(b.text))
         else
             b._widget[] = mount!(b.children[1], b)
             if length(b.children) > 1
@@ -46,7 +46,7 @@ end
 function update!(c::Button)
     return _updates(c) do dirt
         if dirt == :text && !isnothing(c._label)
-            Gtk4.markup(c._label, resolve(String, c.text))
+            Gtk4.markup(c._label, resolve(c.text))
         end
     end
 end

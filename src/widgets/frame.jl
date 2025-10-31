@@ -1,7 +1,6 @@
 export Frame
 
 @gtakwidgetcomponent Frame  begin
-
     const children::Components = []
 end
 

@@ -27,7 +27,7 @@ cachedir(a::Application) = joinpath(BaseDirs.cache(), a.id)
 Base.push!(app::Application, win::AbstractGtakWindow) = @lock app push!(app.windows, win)
 
 """
-    application(init::Function, id::String)
+    application([init::Function,] id::String)
 
 Create the application, initialize using the
 passed function and then mount the application
@@ -38,6 +38,8 @@ function application(init::Function, id::String; args...)
     @lock app init(app)
     return app
 end
+
+application(id::String; args...) = Application(; id, args...)
 
 """
     reload!(a::Application; all = false)
