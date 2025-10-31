@@ -35,7 +35,7 @@ and return it.
 """
 function application(init::Function, id::String; args...)
     app = Application(; id, args...)
-    @lock app init(app)
+    init(app)
     return app
 end
 
@@ -47,7 +47,7 @@ application(id::String; args...) = Application(; id, args...)
 Trigger reload of the current page or
 all pages of the windows of the application.
 """
-reload!(a::Application; all = false) = @lock a foreach(w -> reload!(w; all), a.windows)
+reload!(a::Application; all = false) = foreach(w -> reload!(w; all), @lock a copy(a.windows))
 
 """
     Base.run(app::Application)
@@ -74,15 +74,24 @@ signal to mount it's windows when
 `activate` signal received.
 """
 function IonicEfus.mount!(app::Application)::GtkApplication
+    println("Starting to moun the app")
     @lock app begin
+        println("mounting the app")
         Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
         signal_connect(app.app, :activate) do _
-            @lock app begin
+            println("App activated, mouning app windows")
+            windows = @lock app begin
                 isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())
-                mount!.(app.windows, (app,))
+                copy(app.windows)
             end
+            println("Mounting windows")
+            for window in windows
+                mount!(window, app)
+            end
+            println("Mouted app windows")
         end
+        println("Mounted the app")
         return app.app
     end
 end
@@ -95,8 +104,9 @@ and destroy the app.
 """
 function IonicEfus.unmount!(app::Application)
     @lock app begin
+
         unmount!.(app.windows)
-        isnothing(app.stylesheet) ||unmount!(app.stylesheet)
+        isnothing(app.stylesheet) || unmount!(app.stylesheet)
         if !isnothing(app.app)
             destroy(app.app)
         end

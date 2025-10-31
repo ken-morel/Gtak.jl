@@ -41,11 +41,9 @@ if `all`, then reloads also the history stack
 and redisplays the first page.
 """
 function reload!(w::Window; all::Bool = false)
-    return @lock w begin
-        page = reload!(w.router; all)
-        if page isa AbstractPage
-            show(w, page)
-        end
+    page = reload!(w.router; all)
+    return if page isa AbstractPage
+        show(w, page)
     end
 end
 
@@ -56,8 +54,10 @@ Mount and display the page in the window,
 unmounting previously shown page.
 """
 function Base.show(w::Window, p::Union{AbstractPage, Nothing})
+    println("Starting Showing page")
     @lock w begin
-        isnothing(w.window)&&return
+        println("Showing page on ")
+        isnothing(w.window) && return
 
         lastpage = w.current_page
 
@@ -75,6 +75,7 @@ function Base.show(w::Window, p::Union{AbstractPage, Nothing})
             unmount!(p)
             mount!(p, getcontext(w))
         end
+        println("Mounted page, showing i")
         empty!(w._box) # Just in case
 
         if !isnothing(p)
@@ -99,15 +100,13 @@ can return a page which will be shown on the window.
 """
 function window(init::Function, app::AbstractGtakApplication; args...)
     win = Window(; app, scheduler = app.scheduler, args...)
-    @lock win begin
-        page = init(win)
-        if page isa AbstractPage
-            push!(win.router, page)
-        elseif page isa PageBuilder
-            push!(win.router, page())
-        end
-        push!(app, win)
+    page = init(win)
+    if page isa AbstractPage
+        push!(win.router, page)
+    elseif page isa PageBuilder
+        push!(win.router, page())
     end
+    push!(app, win)
     return win
 end
 window(app::AbstractGtakApplication; args...) = Window(; app, args...)
@@ -119,6 +118,7 @@ Mounts the window in the application returning
 the underlying gtk widget.
 """
 function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
+    println("Starting to mount window")
     @lock w begin
         w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
         w.app = app
@@ -128,13 +128,21 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
         start!(w.scheduler)
         page = getvalue(w.router.current_page)
         if page isa AbstractPage
-            show(w, page)
+            println("Schedulig to show the current window page")
+            schedule!(getscheduler(w)) do
+                println("Showing the current window page on moun!")
+                show(w, page)
+                println("Showed he current window page on moun!")
+            end
         end
         catalyze!(w.catalyst, w.router.current_page) do r
+            println("Router page changed, scheduling updae")
             page = getvalue(r)
             if !isnothing(page)
-                schedule!(getscheduler(w), Sched.High) do
+                schedule!(getscheduler(w)) do
+                    println("Updating changed router page")
                     show(w, page)
+                    println("Updated changed router page")
                 end
             end
         end
