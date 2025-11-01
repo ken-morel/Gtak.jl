@@ -1,7 +1,5 @@
 export Box, HBox, VBox
 
-export Box, HBox, VBox
-
 """
     Box(; orient=Gtk4.Orientation_VERTICAL, spacing=nothing, homogeneous=nothing, kwargs...)
 

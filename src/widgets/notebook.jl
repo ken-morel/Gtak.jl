@@ -1,7 +1,5 @@
 export Notebook
 
-export Notebook
-
 """
     Notebook(; page=0, onswitch=nothing, kwargs...)
 

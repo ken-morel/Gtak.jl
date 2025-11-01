@@ -1,7 +1,5 @@
 export Paned, HPaned, VPaned
 
-export Paned, HPaned, VPaned
-
 """
     Paned(; orient=Gtk4.Orientation_HORIZONTAL, position=nothing, wide_handle=nothing, kwargs...)
 

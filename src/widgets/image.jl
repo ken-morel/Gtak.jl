@@ -1,7 +1,5 @@
 export Image
 
-export Image
-
 """
     Image(; file=nothing, icon_name=nothing, pixel_size=nothing, kwargs...)
 

@@ -1,7 +1,5 @@
 export ProgressBar
 
-export ProgressBar
-
 """
     ProgressBar(; value=0.0, show_text=nothing, text=nothing, kwargs...)
 

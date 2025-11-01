@@ -1,7 +1,5 @@
 export Button
 
-export Button
-
 """
     Button(; text="", onclick=nothing, actionname=nothing, kwargs...)
 

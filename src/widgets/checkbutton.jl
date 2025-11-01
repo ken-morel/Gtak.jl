@@ -1,7 +1,5 @@
 export CheckButton
 
-export CheckButton
-
 """
     CheckButton(; value=false, ontoggle=nothing, label=nothing, kwargs...)
 

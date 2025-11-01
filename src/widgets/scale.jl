@@ -1,7 +1,5 @@
 export Scale
 
-export Scale
-
 """
     Scale(; value=0.0, min=0.0, max=100.0, step=1.0, orient=Gtk4.Orientation_HORIZONTAL, onchange=nothing, kwargs...)
 

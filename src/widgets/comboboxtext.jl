@@ -1,7 +1,5 @@
 export ComboBoxText
 
-export ComboBoxText
-
 """
     ComboBoxText(; items=[], active=-1, onchange=nothing, kwargs...)
 

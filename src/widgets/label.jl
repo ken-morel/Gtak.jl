@@ -1,7 +1,5 @@
 export Label
 
-export Label
-
 """
     Label(; text="", usemarkup=true, selectable=nothing, justify=nothing, wrap=nothing, wrapmode=nothing, kwargs...)
 

@@ -1,7 +1,5 @@
 export Entry
 
-export Entry
-
 """
     Entry(; text="", placeholder="", onchange=nothing, name=nothing, kwargs...)
 

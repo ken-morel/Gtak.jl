@@ -1,7 +1,5 @@
 export ScrolledWindow
 
-export ScrolledWindow
-
 """
     ScrolledWindow(; kwargs...)
 

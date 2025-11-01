@@ -1,7 +1,5 @@
 export Frame
 
-export Frame
-
 """
     Frame(; kwargs...)
 

@@ -1,7 +1,5 @@
 export Grid
 
-export Grid
-
 """
     Grid(; spacing=nothing, homogeneous=nothing, kwargs...)
 

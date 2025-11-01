@@ -1,7 +1,5 @@
 export LinkButton
 
-export LinkButton
-
 """
     LinkButton(; uri, text=nothing, kwargs...)
 
