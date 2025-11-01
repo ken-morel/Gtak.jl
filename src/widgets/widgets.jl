@@ -2,10 +2,13 @@ export GtakComponent, scheduleupdate, getpage
 abstract type GtakWidgetComponent <: GtakComponent end
 
 
-macro gtakwidgetcomponent(name::Symbol, block)
+macro gtakwidgetcomponent(name, block)
+    if name isa Symbol
+        name = Expr(:<:, name, :GtakWidgetComponent)
+    end
     return esc(
         quote
-            @gtakcomponent $name <: GtakWidgetComponent  begin
+            @gtakcomponent $name   begin
                 opacity::Union{MayBeReactive{<:Real}, Nothing} = nothing
                 margin::Union{MayBeReactive{Union{Int, NTuple{2, Int}, NTuple{4, Int}}}, Nothing} = nothing
                 align::Union{MayBeReactive{<:Union{<:NTuple{2, Union{Gtk4.Align, Nothing}}, Gtk4.Align}}, Nothing} = nothing
@@ -157,6 +160,7 @@ include("./comboboxtext.jl")
 include("./notebook.jl")
 include("./paned.jl")
 include("./video.jl")
+include("./menu.jl")
 
 
 @generated getparent(c::GtakComponent) = hasfield(c, :_parent) ? :(c._parent) : nothing

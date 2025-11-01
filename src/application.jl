@@ -13,6 +13,7 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     stores::Dict{Symbol, Atak.AbstractStoreNode} = Dict()
     data::Dict{Symbol, Any} = Dict()
     stylesheet::Union{Stylesheet, Nothing} = nothing
+    menubar::Union{AbstractMenu, Nothing} = nothing
     scheduler::Sched.Scheduler = Sched.Scheduler()
     const _lock = ReentrantLock()
 end
@@ -77,6 +78,10 @@ function IonicEfus.mount!(app::Application)::GtkApplication
     @lock app begin
         Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
+        if !isnothing(app.menubar)
+            @error "Menus are not yet supported"
+            # app.app.menu = mount!(app.menubar, app.app)
+        end
         signal_connect(app.app, :activate) do _
             windows = @lock app begin
                 isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())

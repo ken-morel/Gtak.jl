@@ -24,6 +24,10 @@ abstract type GtakComponent <: IonicEfus.Component end
 abstract type AbstractGtakWindow <: GtakComponent end
 
 
+abstract type AbstractMenu <: GtakComponent end
+abstract type AbstractMenuItem <: GtakComponent end
+
+
 include("./bridge.jl")
 include("./style.jl")
 include("./page.jl")
