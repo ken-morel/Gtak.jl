@@ -1,7 +1,14 @@
 export Switch
 
+"""
+    Switch(; value=false, ontoggle=nothing, kwargs...)
+
+A switch widget that can be toggled between on and off states.
+"""
 @gtakwidgetcomponent Switch  begin
+    "The current state of the switch (`true` for on, `false` for off)."
     value::MayBeReactive{Bool} = false
+    "A callback function to execute when the switch is toggled. Receives the new boolean state as an argument."
     ontoggle::Union{Function, Nothing} = nothing
 
     _signal_id::UInt = 0

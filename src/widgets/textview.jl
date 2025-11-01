@@ -1,9 +1,18 @@
 export TextView
 
+"""
+    TextView(; text="", editable=nothing, monospace=nothing, onchange=nothing, kwargs...)
+
+A multi-line text input field.
+"""
 @gtakwidgetcomponent TextView begin
+    "The current text content of the text view."
     text::MayBeReactive{<:AbstractString} = ""
+    "Whether the text can be edited by the user."
     editable::Union{MayBeReactive{Bool}, Nothing} = nothing
+    "Whether to use a monospace font."
     monospace::Union{MayBeReactive{Bool}, Nothing} = nothing
+    "A callback function to execute when the text changes. Receives the new text as an argument."
     onchange::Union{Function, Nothing} = nothing
 
     _buffer::Union{GtkTextBuffer, Nothing} = nothing

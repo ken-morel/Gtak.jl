@@ -2,12 +2,21 @@ export Window, window, reload!, AbstractGtakWindow
 
 
 """
-    Base.@kwdef mutable struct Window <: AbstractGtakWindow
+    Window
 
-The gtak window manages a router and displays pages,
-windows are all mounted in an application.
-They implement efus component lifecycle, so can
-me reused an mounted from an app to another.
+A top-level window in a Gtak application.
+
+It manages a `Router` to display pages and has its own component lifecycle. Windows are typically created within an `Application`.
+
+**Fields**
+
+- `scheduler::Scheduler`: The task scheduler for this window (often shared with the application).
+- `router::Router`: The router that manages the window's page navigation stack.
+- `title::String`: The text displayed in the window's title bar.
+- `stylesheet::Union{Stylesheet, Nothing}`: An optional stylesheet to apply specifically to this window.
+- `window::Union{GtkWindow, Nothing}`: The underlying `GtkApplicationWindow` object.
+- `app::Union{AbstractGtakApplication, Nothing}`: The parent application.
+- `current_page::Union{AbstractPage, Nothing}`: The currently displayed page.
 """
 Base.@kwdef mutable struct Window <: AbstractGtakWindow
     const catalyst = Catalyst()
@@ -24,9 +33,9 @@ Base.@kwdef mutable struct Window <: AbstractGtakWindow
 end
 
 """
-    getcontext(::Window)
+    getcontext(w::Window)
 
-Get the window's [`PageContext`](@ref).
+Get the window's `PageContext`.
 """
 getcontext(w::Window) = w.context
 
@@ -36,9 +45,7 @@ getscheduler(w::Window) = w.scheduler
 """
     reload!(w::Window; all::Bool = false)
 
-Reload the current page in the window, 
-if `all`, then reloads also the history stack
-and redisplays the first page.
+Reloads the current page in the window. If `all=true`, it reloads the entire page history.
 """
 function reload!(w::Window; all::Bool = false)
     page = reload!(w.router; all)
@@ -50,8 +57,7 @@ end
 """
     Base.show(w::Window, p::Union{AbstractPage, Nothing})
 
-Mount and display the page in the window,
-unmounting previously shown page.
+Mounst and displays the given page in the window, unmounting the previous page.
 """
 function Base.show(w::Window, p::Union{AbstractPage, Nothing})
     @lock w begin
@@ -87,13 +93,11 @@ end
 
 
 """
-    window([init::Function,] app::AbstractGtakApplication; args...)
+    window(init::Function, app::AbstractGtakApplication; kwargs...)
 
-Helper which creates the window, calls the init on it and
-adds the window to the app, if the app was already
-mounted the new window will not be mounted and has
-to manually be mounted in the init!, the init
-can return a page which will be shown on the window.
+Creates a `Window`, adds it to the application, and runs an initialization function.
+
+The `init` function receives the new window and can return a `Page` or `PageBuilder` to be set as the initial page.
 """
 function window(init::Function, app::AbstractGtakApplication; args...)
     win = Window(; app, scheduler = app.scheduler, args...)
@@ -108,12 +112,6 @@ function window(init::Function, app::AbstractGtakApplication; args...)
 end
 window(app::AbstractGtakApplication; args...) = Window(; app, args...)
 
-"""
-    IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
-
-Mounts the window in the application returning
-the underlying gtk widget.
-"""
 function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
     @lock w begin
         w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
@@ -144,11 +142,6 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
     end
 end
 
-"""
-    IonicEfus.unmount!(w::Window)
-
-Unmount the window.
-"""
 function IonicEfus.unmount!(w::Window)
     @lock w begin
         if !isnothing(w.currentpage)

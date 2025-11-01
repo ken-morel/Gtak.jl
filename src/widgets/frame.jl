@@ -1,5 +1,10 @@
 export Frame
 
+"""
+    Frame(; kwargs...)
+
+A container that draws a frame around its child, with an optional label.
+"""
 @gtakwidgetcomponent Frame  begin
     const children::Components = []
 end
@@ -25,6 +30,14 @@ end
 
 export BoxFrame
 
+"""
+    BoxFrame(; box=SubParams(), kwargs...)
+
+A `Frame` that contains a `Box` as its child, allowing for easy layout within the frame.
+
+**Fields**
+- `box::SubParams`: Parameters to pass to the internal `Box` component.
+"""
 @gtakwidgetcomponent BoxFrame  begin
     const box::SubParams = SubParams()
 

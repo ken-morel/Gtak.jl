@@ -1,6 +1,20 @@
 export For
 const _RLCache = Tuple{Any, Components, Vector{<:GtkWidget}}
 
+"""
+    For(; items, builder, remount=false, rebuild=false, box=SubParams(), kwargs...)
+
+A control flow component that iterates over a collection of `items` and renders a set of components for each item.
+
+It efficiently updates, adds, or removes items from the UI when the `items` collection changes.
+
+**Fields**
+- `items`: A reactive collection (e.g., `Vector`, `Reactant{Vector}`) to iterate over.
+- `builder::Function`: A function that takes a single item from `items` and returns a `Component` or `Components` to render for that item.
+- `remount::Bool`: If `true`, components are unmounted and remounted when `items` change, even if the item itself hasn't changed.
+- `rebuild::Bool`: If `true`, the `builder` function is re-executed for existing items when `items` change.
+- `box::SubParams`: Parameters to pass to the internal `Box` container that holds the rendered items.
+"""
 @gtakcomponent For <: GtakComponent begin
     items::MayBeReactive
     builder::Function

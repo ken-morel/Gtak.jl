@@ -1,8 +1,16 @@
 export Image
 
+"""
+    Image(; file=nothing, icon_name=nothing, pixel_size=nothing, kwargs...)
+
+A widget that displays an image from a file or a named icon.
+"""
 @gtakwidgetcomponent Image begin
+    "The path to an image file to display."
     file::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
+    "The name of a themed icon to display (e.g., \"document-new-symbolic\")."
     icon_name::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
+    "The desired size of the image in pixels."
     pixel_size::Union{MayBeReactive{Int}, Nothing} = nothing
 end
 

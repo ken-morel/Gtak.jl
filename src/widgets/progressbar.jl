@@ -1,8 +1,16 @@
 export ProgressBar
 
+"""
+    ProgressBar(; value=0.0, show_text=nothing, text=nothing, kwargs...)
+
+A widget that displays the progress of an operation.
+"""
 @gtakwidgetcomponent ProgressBar begin
+    "The current value of the progress bar, between 0.0 and 1.0."
     value::MayBeReactive{<:Real} = 0.0
+    "Whether to display a text representation of the progress."
     show_text::Union{MayBeReactive{Bool}, Nothing} = nothing
+    "The text to display on the progress bar. If `show_text` is `true`, this overrides the default percentage display."
     text::Union{MayBeReactive{String}, Nothing} = nothing
 end
 

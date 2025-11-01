@@ -1,8 +1,19 @@
 export Paned, HPaned, VPaned
 
+"""
+    Paned(; orient=Gtk4.Orientation_HORIZONTAL, position=nothing, wide_handle=nothing, kwargs...)
+
+A container that divides its area into two resizable panes.
+
+`HPaned(...)` is a convenience constructor for a horizontal paned (`orient=Gtk4.Orientation_HORIZONTAL`).
+`VPaned(...)` is a convenience constructor for a vertical paned (`orient=Gtk4.Orientation_VERTICAL`).
+"""
 @gtakwidgetcomponent Paned begin
+    "The orientation of the paned: `Gtk4.Orientation_HORIZONTAL` or `Gtk4.Orientation_VERTICAL`."
     orient::Gtk4.Orientation = O_H
+    "The position of the divider between the two panes."
     position::Union{MayBeReactive{<:Integer}, Nothing} = nothing
+    "Whether the handle should be wider for easier grabbing."
     wide_handle::Union{MayBeReactive{Bool}, Nothing} = nothing
 
     const children::Components = []

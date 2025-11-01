@@ -1,7 +1,16 @@
 export Grid
 
+"""
+    Grid(; spacing=nothing, homogeneous=nothing, kwargs...)
+
+A container that arranges its children in a grid.
+
+Children of a `Grid` component should specify their position using the `lay:pos=(row, column)` attribute.
+"""
 @gtakwidgetcomponent Grid  begin
+    "The spacing between rows and columns. Can be an `Int` for uniform spacing or a `(row_spacing, column_spacing)` tuple."
     spacing::Union{NTuple{2, Int}, Int, Nothing} = nothing
+    "Whether rows and columns should be homogeneous (i.e., all rows/columns have the same size). Can be a `(row_homogeneous, column_homogeneous)` tuple."
     homogeneous::Union{NTuple{2, Bool}, Nothing} = nothing
 
     children::Components = []

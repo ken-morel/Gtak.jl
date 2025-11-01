@@ -1,6 +1,20 @@
 export Switched
 
 const _SBCacheRow = Tuple{Any, Components, Vector{<:GtkWidget}}
+"""
+    Switched(; value, builder, rebuild=false, remount=false, box=SubParams(), kwargs...)
+
+A control flow component that conditionally renders different sets of components based on a reactive `value`.
+
+It is similar to a `match` or `switch` statement, rendering content based on the current state of `value`.
+
+**Fields**
+- `value::AbstractReactive`: The reactive value that determines which components to render.
+- `builder::Function`: A function that takes the current `value` and returns a `Component` or `Components` to be rendered for that value.
+- `rebuild::Bool`: If `true`, the `builder` function is re-executed for the current `value` even if the `value` itself hasn't changed.
+- `remount::Bool`: If `true`, components are unmounted and remounted when the `value` changes, even if the rendered components are the same.
+- `box::SubParams`: Parameters to pass to the internal `Box` container that holds the rendered content.
+"""
 @gtakcomponent Switched <: GtakComponent begin
     value::AbstractReactive
     builder::Function

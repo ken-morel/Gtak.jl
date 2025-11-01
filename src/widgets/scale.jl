@@ -1,11 +1,22 @@
 export Scale
 
+"""
+    Scale(; value=0.0, min=0.0, max=100.0, step=1.0, orient=Gtk4.Orientation_HORIZONTAL, onchange=nothing, kwargs...)
+
+A slider widget that allows the user to select a value from a range.
+"""
 @gtakwidgetcomponent Scale begin
+    "The current value of the slider."
     value::MayBeReactive{<:Real} = 0.0
+    "The minimum value of the range."
     min::MayBeReactive{<:Real} = 0.0
+    "The maximum value of the range."
     max::MayBeReactive{<:Real} = 100.0
+    "The step increment for the slider."
     step::MayBeReactive{<:Real} = 1.0
+    "The orientation of the slider: `Gtk4.Orientation_HORIZONTAL` or `Gtk4.Orientation_VERTICAL`."
     orient::Gtk4.Orientation = O_H
+    "A callback function to execute when the slider's value changes. Receives the new value as an argument."
     onchange::Union{Function, Nothing} = nothing
 
     _signal_id::UInt = 0

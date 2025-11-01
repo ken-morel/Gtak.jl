@@ -1,10 +1,22 @@
 export Application, application, reload!, configdirs, cachedir
 
 """
-    Base.@kwdef mutable struct Application <: AbstractGtakApplication
+    Application
 
-The Gtak application comonent, has an internal
-store containing it's id, and a vector of windows.
+The top-level container for a Gtak application.
+
+It manages windows, application-wide state, data stores, and the main GTK `GtkApplication` instance.
+
+**Fields**
+
+- `id::String`: The unique application ID (e.g., "com.example.myapp").
+- `windows::Vector{AbstractGtakWindow}`: A list of the application's windows.
+- `app::Union{GtkApplication, Nothing}`: The underlying `GtkApplication` object.
+- `stores::Dict{Symbol, Atak.AbstractStoreNode}`: A dictionary for data persistence, managed by `Atak.jl`.
+- `data::Dict{Symbol, Any}`: A dictionary for holding arbitrary application-wide, non-persistent state.
+- `stylesheet::Union{Stylesheet, Nothing}`: An optional stylesheet to apply to the application.
+- `menubar::Union{Menu, Nothing}`: An optional `Menu` component to be used as the application's menubar.
+- `scheduler::Sched.Scheduler`: The task scheduler for the application, provided by `Atak.jl`.
 """
 Base.@kwdef mutable struct Application <: AbstractGtakApplication
     id::String
@@ -13,7 +25,7 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     stores::Dict{Symbol, Atak.AbstractStoreNode} = Dict()
     data::Dict{Symbol, Any} = Dict()
     stylesheet::Union{Stylesheet, Nothing} = nothing
-    menubar::Union{AbstractMenu, Nothing} = nothing
+    menubar::Union{Menu, Nothing} = nothing
     scheduler::Sched.Scheduler = Sched.Scheduler()
     const _lock = ReentrantLock()
 end
@@ -21,18 +33,34 @@ end
 Base.schedule(fn::Function, a::Application) = schedule!(fn, a.scheduler)
 Base.schedule(a::Application, t::Sched.AbstractPriorityTask) = schedule!(a.scheduler, t)
 
+"""
+    configdirs(a::Application)
+
+Returns the application's configuration directory path.
+"""
 configdirs(a::Application) = joinpath.(BaseDirs.config(), (a.id,))
+
+"""
+    cachedir(a::Application)
+
+Returns the application's cache directory path.
+"""
 cachedir(a::Application) = joinpath(BaseDirs.cache(), a.id)
 
 
 Base.push!(app::Application, win::AbstractGtakWindow) = @lock app push!(app.windows, win)
 
 """
-    application([init::Function,] id::String)
+    application(init::Function, id::String; kwargs...)
 
-Create the application, initialize using the
-passed function and then mount the application
-and return it.
+Create a new `Application`.
+
+This is the main entry point for creating a Gtak application. It creates an `Application` instance, runs the `init` function to allow you to add windows and set up state, and returns the application object, ready to be run with `run()`.
+
+**Arguments**
+- `init::Function`: A function that takes the newly created `Application` object as its only argument.
+- `id::String`: The unique application ID.
+- `kwargs...`: Keyword arguments to be passed to the `Application` constructor (e.g., `stylesheet`, `menubar`).
 """
 function application(init::Function, id::String; args...)
     app = Application(; id, args...)
@@ -45,16 +73,17 @@ application(id::String; args...) = Application(; id, args...)
 """
     reload!(a::Application; all = false)
 
-Trigger reload of the current page or
-all pages of the windows of the application.
+Reloads the pages in the application's windows. Useful for development with `Revise.jl`.
+
+- `all=true`: Reloads all pages in the navigation history of each window.
+- `all=false` (default): Reloads only the currently visible page in each window.
 """
 reload!(a::Application; all = false) = foreach(w -> reload!(w; all), @lock a copy(a.windows))
 
 """
     Base.run(app::Application)
 
-Run the gtak application, and mount
-it if not already mounted.
+Starts the GTK event loop and runs the application.
 """
 function Base.run(app::Application)
     if isnothing(app.app)
@@ -67,20 +96,12 @@ function Base.run(app::Application)
 end
 
 
-"""
-    IonicEfus.mount!(app::Application)
-
-Create the application widget, and connect a
-signal to mount it's windows when 
-`activate` signal received.
-"""
 function IonicEfus.mount!(app::Application)::GtkApplication
     @lock app begin
         Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
         if !isnothing(app.menubar)
-            @error "Menus are not yet supported"
-            # app.app.menu = mount!(app.menubar, app.app)
+            mount!(app.menubar, app.app)
         end
         signal_connect(app.app, :activate) do _
             windows = @lock app begin
@@ -95,12 +116,6 @@ function IonicEfus.mount!(app::Application)::GtkApplication
     end
 end
 
-"""
-    IonicEfus.unmount!(app::Application)
-
-Unmount the app windows(See [`IonicEfus.unmount!(::Window)`](@ref))
-and destroy the app.
-"""
 function IonicEfus.unmount!(app::Application)
     @lock app begin
 
@@ -119,10 +134,11 @@ end
 """
     spa(fn::Function, id::String = "com.gtak.test")
 
-Run a single page application.
+A convenience function to create a Single-Page Application.
 
-- `fn`: A function receiving the app and window((app, win))
-  and which may return a page or pagebuilder.
+It creates an `Application` and a single `Window` in one call.
+
+- `fn`: A function that receives the app and window (`(app, win)`) and returns a `Page` or `PageBuilder`.
 """
 function spa(fn::Function, id::String = "com.gtak.test")
     return application(id) do app

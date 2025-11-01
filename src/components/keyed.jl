@@ -1,5 +1,15 @@
 export Keyed
 
+"""
+    Keyed(; deps, builder, box=SubParams(), kwargs...)
+
+A control flow component that rebuilds its content whenever any of its specified reactive dependencies (`deps`) change.
+
+**Fields**
+- `deps::Vector{<:AbstractReactive}`: A vector of reactive objects. When any of these objects change, the `builder` function is re-executed and the content is rebuilt.
+- `builder::Function`: A function that returns a `Component` or `Components` to be rendered. This function is called whenever a dependency changes.
+- `box::SubParams`: Parameters to pass to the internal `Box` container that holds the rendered content.
+"""
 @gtakcomponent Keyed <: GtakComponent begin
     deps::Vector{<:AbstractReactive}
     builder::Function
