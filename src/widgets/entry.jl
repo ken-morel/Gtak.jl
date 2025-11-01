@@ -1,9 +1,20 @@
 export Entry
 
+export Entry
+
+"""
+    Entry(; text="", placeholder="", onchange=nothing, name=nothing, kwargs...)
+
+A single-line text input field.
+"""
 @gtakwidgetcomponent Entry  begin
+    "The current text content of the entry field."
     text::MayBeReactive{<:AbstractString} = ""
+    "Placeholder text to display when the entry is empty."
     placeholder::MayBeReactive{<:AbstractString} = ""
+    "A callback function to execute when the text in the entry changes. Receives the new text as an argument."
     onchange::Union{Function, Nothing} = nothing
+    "The name of the entry widget."
     name::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
 
     _changed_handler_id::UInt = 0

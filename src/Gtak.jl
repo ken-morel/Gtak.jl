@@ -18,13 +18,39 @@ using Atak.Sched
 
 export GtakComponent, AbstractGtakApplication, AbstractGtakWindow
 
+"""
+    AbstractGtakApplication <: Atak.Application
 
+Abstract supertype for all Gtak application components.
+"""
 abstract type AbstractGtakApplication <: Atak.Application end
+
+"""
+    GtakComponent <: IonicEfus.Component
+
+Abstract supertype for all Gtak UI components.
+"""
 abstract type GtakComponent <: IonicEfus.Component end
+
+"""
+    AbstractGtakWindow <: GtakComponent
+
+Abstract supertype for all Gtak window components.
+"""
 abstract type AbstractGtakWindow <: GtakComponent end
 
+"""
+    AbstractMenu <: GtakComponent
 
+Abstract supertype for all Gtak menu components.
+"""
 abstract type AbstractMenu <: GtakComponent end
+
+"""
+    AbstractMenuItem <: GtakComponent
+
+Abstract supertype for all Gtak menu item components.
+"""
 abstract type AbstractMenuItem <: GtakComponent end
 
 

@@ -1,7 +1,18 @@
 export Notebook
 
+export Notebook
+
+"""
+    Notebook(; page=0, onswitch=nothing, kwargs...)
+
+A container that displays one of several pages at a time, with tabs to switch between them.
+
+Children of a `Notebook` should specify their tab label using `lay:tab="Tab Name"`.
+"""
 @gtakwidgetcomponent Notebook begin
+    "The index of the currently visible page (0-indexed)."
     page::MayBeReactive{<:Integer} = 0
+    "A callback function to execute when the active page changes. Receives the new page index as an argument."
     onswitch::Union{Function, Nothing} = nothing
 
     const children::Components = []

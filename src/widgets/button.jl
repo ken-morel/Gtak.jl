@@ -1,8 +1,18 @@
 export Button
 
+export Button
+
+"""
+    Button(; text="", onclick=nothing, actionname=nothing, kwargs...)
+
+A clickable button.
+"""
 @gtakwidgetcomponent Button  begin
+    "The text to display on the button. If children are provided, this is ignored."
     text::MayBeReactive{<:AbstractString} = ""
+    "A callback function to execute when the button is clicked."
     onclick::Union{Function, Nothing} = nothing
+    "The name of a `GAction` to activate when the button is clicked."
     actionname::Union{<:AbstractString, Nothing} = nothing
 
     _label::Union{GtkLabel, Nothing} = nothing

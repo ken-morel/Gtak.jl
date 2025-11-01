@@ -1,8 +1,18 @@
 export ComboBoxText
 
+export ComboBoxText
+
+"""
+    ComboBoxText(; items=[], active=-1, onchange=nothing, kwargs...)
+
+A combo box that allows selecting from a list of text items.
+"""
 @gtakwidgetcomponent ComboBoxText begin
+    "A list of strings to display as selectable items in the combo box."
     items::MayBeReactive{<:AbstractVector{<:AbstractString}} = String[]
+    "The index of the currently active (selected) item. -1 means no item is selected."
     active::MayBeReactive{<:Integer} = -1 # Gtk default is -1 for no active item
+    "A callback function to execute when the active item changes. Receives the new active index as an argument."
     onchange::Union{Function, Nothing} = nothing
 
     _signal_id::UInt = 0

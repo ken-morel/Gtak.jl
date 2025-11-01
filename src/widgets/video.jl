@@ -1,8 +1,16 @@
 export Video
 
+"""
+    Video(; file=nothing, autoplay=nothing, loop=nothing, kwargs...)
+
+A widget that displays a video from a file.
+"""
 @gtakwidgetcomponent Video begin
+    "The path to a video file to display."
     file::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
+    "Whether the video should start playing automatically."
     autoplay::Union{MayBeReactive{Bool}, Nothing} = nothing
+    "Whether the video should loop when it reaches the end."
     loop::Union{MayBeReactive{Bool}, Nothing} = nothing
 end
 

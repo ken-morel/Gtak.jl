@@ -1,8 +1,21 @@
 export Box, HBox, VBox
 
+export Box, HBox, VBox
+
+"""
+    Box(; orient=Gtk4.Orientation_VERTICAL, spacing=nothing, homogeneous=nothing, kwargs...)
+
+A container that packs its children in a single row or column.
+
+`HBox(...)` is a convenience constructor for a horizontal box (`orient=Gtk4.Orientation_HORIZONTAL`).
+`VBox(...)` is a convenience constructor for a vertical box (`orient=Gtk4.Orientation_VERTICAL`).
+"""
 @gtakwidgetcomponent Box  begin
+    "The orientation of the box: `Gtk4.Orientation_HORIZONTAL` or `Gtk4.Orientation_VERTICAL`."
     orient::Gtk4.Orientation = Gtk4.Orientation_VERTICAL
+    "The spacing between children in pixels."
     spacing::Union{MayBeReactive{Int}, Nothing} = nothing
+    "Whether all children should be allocated the same size."
     homogeneous::Union{MayBeReactive{Bool}, Nothing} = nothing
 
     const children::Vector{Component} = []

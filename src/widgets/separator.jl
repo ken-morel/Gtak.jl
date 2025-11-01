@@ -1,6 +1,12 @@
 export Separator
 
+"""
+    Separator(; orient=Gtk4.Orientation_HORIZONTAL, kwargs...)
+
+A widget that displays a horizontal or vertical line to separate other widgets.
+"""
 @gtakwidgetcomponent Separator  begin
+    "The orientation of the separator: `Gtk4.Orientation_HORIZONTAL` or `Gtk4.Orientation_VERTICAL`."
     orient::MayBeReactive{Gtk4.Orientation} = O_H
 end
 

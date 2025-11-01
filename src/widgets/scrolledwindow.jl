@@ -1,5 +1,14 @@
 export ScrolledWindow
 
+export ScrolledWindow
+
+"""
+    ScrolledWindow(; kwargs...)
+
+A container that provides scrollbars for its child widget when the child is larger than the allocated space.
+
+It can only have one child.
+"""
 @gtakwidgetcomponent ScrolledWindow begin
     const children::Components = []
 end

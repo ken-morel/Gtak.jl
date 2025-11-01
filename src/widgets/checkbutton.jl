@@ -1,8 +1,18 @@
 export CheckButton
 
+export CheckButton
+
+"""
+    CheckButton(; value=false, ontoggle=nothing, label=nothing, kwargs...)
+
+A button that can be in one of two states: checked or unchecked.
+"""
 @gtakwidgetcomponent CheckButton  begin
+    "The current state of the check button (`true` for checked, `false` for unchecked)."
     value::MayBeReactive{Bool} = false
+    "A callback function to execute when the button's state is toggled. Receives the new boolean state as an argument."
     ontoggle::Union{Function, Nothing} = nothing
+    "The text label displayed next to the check button."
     label::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
 
     const children::Components = []

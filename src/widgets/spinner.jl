@@ -1,6 +1,12 @@
 export Spinner
 
+"""
+    Spinner(; spinning=true, kwargs...)
+
+An animated widget that indicates activity.
+"""
 @gtakwidgetcomponent Spinner  begin
+    "Whether the spinner is currently spinning."
     spinning::MayBeReactive{Bool} = true
 end
 
