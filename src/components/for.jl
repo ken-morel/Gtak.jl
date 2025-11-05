@@ -46,8 +46,8 @@ end
 
 function updatecontent!(l::For)
     new_items = resolve(l.items)
-    rebuild = resolve(Bool, l.rebuild)
-    remount = resolve(Bool, l.remount)
+    rebuild = resolve(l.rebuild)
+    remount = resolve(l.remount)
 
     old_cache_map = Dict{Any, Tuple{Components, Vector{<:GtkWidget}}}()
     for (item, components, widgets) in l._cache
