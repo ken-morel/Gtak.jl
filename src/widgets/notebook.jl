@@ -1,6 +1,35 @@
 export Notebook, NotebookTab
 
 
+"""
+    Notebook(; tabs, builder, tab, children...)
+
+A container that displays one of several pages at a time, with tabs to switch between them.
+The `Notebook` can be used in two modes: dynamic or static.
+
+**Dynamic Mode**
+
+This mode is recommended for notebooks where the tabs can change over time. It is activated by providing the `tabs` and `builder` properties.
+
+*   `tabs`: A `MayBeReactive{<:AbstractVector}` containing the data for each tab.
+*   `builder`: A `Snippet` that takes a single item from the `tabs` vector and returns a `NotebookTab` component.
+*   `tab`: An optional `MayBeReactive` for two-way binding of the selected tab. Its value corresponds to an item in the `tabs` vector.
+
+**Static Mode**
+
+This mode is for notebooks with a fixed number of tabs. It is activated by passing `NotebookTab` components as direct children.
+
+```efus
+# Dynamic Example
+
+Notebook tabs=TABS tab=SELECTED_TAB
+  builder(info)
+    NotebookTab label=info.title
+      VBox margin=10
+        Label text="Content for tab #$(info.id)"
+  end
+```
+"""
 @gtakwidgetcomponent struct Notebook
     const children::Components = Components()
     tabs::MayBeReactive{<:AbstractVector} = []
@@ -27,9 +56,11 @@ function mount!(tb::NotebookTab, nb::Notebook)
 
         if tb.label isa AbstractReactive
             catalyze!(tb._catalyst, tb.label) do label
-                schedule(tb, Sched.ComponentUpdate(tb, Sched.Normal)) do
-                    tb._label.label = resolve(label)
-                end
+                schedule(
+                    tb, Sched.ComponentUpdate(tb, Sched.Normal) do
+                        tb._label.label = resolve(label)
+                    end
+                )
             end
         end
         return tb._content, tb._label
@@ -108,7 +139,7 @@ function updatetabs!(c::Notebook, new_tabs_data::AbstractVector)
     new_content = []
     old_content = c._content
 
-    # --- 1. Preserve selection --- 
+    # --- 1. Preserve selection ---
     selected_value = nothing
     was_removed = false
     if !isempty(old_content)
@@ -154,14 +185,14 @@ function updatetabs!(c::Notebook, new_tabs_data::AbstractVector)
         end
     end
 
-    # --- 3. Rebuild the UI --- 
+    # --- 3. Rebuild the UI ---
     empty!(c._widget)
     for cache in new_content
         push!(c._widget, cache.tab._content, cache.tab._label)
     end
     c._content = new_content
 
-    # --- 4. Restore selection --- 
+    # --- 4. Restore selection ---
     if selected_value !== nothing
         new_idx = findfirst(c -> c.value == selected_value, new_content)
         if new_idx !== nothing
@@ -193,4 +224,3 @@ function unmount!(c::Notebook)
         _gtakunmountwidget!(c)
     end
 end
-

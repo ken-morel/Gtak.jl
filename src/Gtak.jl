@@ -53,6 +53,29 @@ Abstract supertype for all Gtak menu item components.
 """
 abstract type AbstractMenuItem <: GtakComponent end
 
+export gmain
+function gmain(fn::Function)
+    done = Threads.Condition()
+    err = Ref{Any}(nothing)
+    ret = Ref{Any}(nothing)
+    Gtk4.g_idle_add() do
+        try
+            ret[] = fn()
+        catch e
+            err[] = e
+        finally
+            @lock done notify(done)
+        end
+        false
+    end
+    @lock done wait(done)
+    return if err[] != nothing
+        throw(err[])
+    else
+        ret[]
+    end
+end
+
 
 include("./bridge.jl")
 include("./style.jl")

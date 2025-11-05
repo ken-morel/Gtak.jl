@@ -99,10 +99,9 @@ function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: G
 end
 
 function _updates(fn::Function, c::Component)
-    @lock c begin
-        done = Threads.Condition()
-        Gtk4.g_idle_add() do
-            if ismounted(c)
+    return @lock c begin
+        if ismounted(c)
+            gmain() do
                 while !isempty(c._dirty)
                     key = pop!(c._dirty)
                     if key in _gtak_common
@@ -119,18 +118,14 @@ function _updates(fn::Function, c::Component)
                     end
                 end
             end
-            @lock done notify(done)
-            false
         end
-        return
-        wait(done)
     end
 end
 update!(c::GtakComponent) = _updates(identity, c)
 function _gtakwidgetmountcommon!(c, donttrack::Vector)
     @lock c begin
         for (name,) in params(c)
-            dirty!(c, name)
+            dirty!(c, name; priority = nothing)
             @assert !isnothing(c._widget) "$name errored amongst $(params(c))"
         end
         _trackreactiveattributes(c, donttrack)
@@ -202,7 +197,6 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
         if !isnothing(children)
             foreach(unmount!, c.children)
         end
-
         for widgetprop in widgets
             widget = getproperty(c, widgetprop)
             if !isnothing(widget)
