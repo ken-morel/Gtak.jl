@@ -108,14 +108,29 @@ function updatetabs!(c::Notebook, new_tabs_data::AbstractVector)
     new_content = []
     old_content = c._content
 
-    # Find tabs to remove
+    # --- 1. Preserve selection --- 
+    selected_value = nothing
+    was_removed = false
+    if !isempty(old_content)
+        current_page = c._widget.page
+        if current_page >= 0 && current_page < length(old_content)
+            selected_value = old_content[current_page + 1].value
+            # Check if the selected tab will be removed
+            if findfirst(==(selected_value), new_tabs_data) === nothing
+                was_removed = true
+            end
+        end
+    end
+
+    # --- 2. Determine which tabs to keep, remove, and add ---
+    # Find tabs to remove and unmount them
     to_remove_indices = [i for (i, cache) in enumerate(old_content) if findfirst(==(cache.value), new_tabs_data) === nothing]
     for i in reverse(to_remove_indices)
         cache = popat!(old_content, i)
         unmount!(cache.tab)
     end
 
-    # Add new tabs and reorder existing ones
+    # Build the new content cache, mounting new tabs
     for data in new_tabs_data
         existing_cache = nothing
         for cache in old_content
@@ -139,11 +154,28 @@ function updatetabs!(c::Notebook, new_tabs_data::AbstractVector)
         end
     end
 
+    # --- 3. Rebuild the UI --- 
     empty!(c._widget)
     for cache in new_content
         push!(c._widget, cache.tab._content, cache.tab._label)
     end
-    return c._content = new_content
+    c._content = new_content
+
+    # --- 4. Restore selection --- 
+    if selected_value !== nothing
+        new_idx = findfirst(c -> c.value == selected_value, new_content)
+        if new_idx !== nothing
+            # The tab still exists, select it
+            c._widget.page = new_idx - 1
+        elseif was_removed
+            # The selected tab was removed, select the new last tab
+            if !isempty(new_content)
+                c._widget.page = length(new_content) - 1
+            end
+        end
+    end
+
+    return
 end
 
 function unmount!(c::Notebook)
