@@ -105,64 +105,45 @@ function update!(c::Notebook)
 end
 
 function updatetabs!(c::Notebook, new_tabs_data::AbstractVector)
+    new_content = []
     old_content = c._content
-    
-    new_data_set = Set(new_tabs_data)
-    old_data_set = Set(cache.value for cache in old_content)
 
-    to_add = setdiff(new_data_set, old_data_set)
-    to_remove = setdiff(old_data_set, new_data_set)
+    # Find tabs to remove
+    to_remove_indices = [i for (i, cache) in enumerate(old_content) if findfirst(==(cache.value), new_tabs_data) === nothing]
+    for i in reverse(to_remove_indices)
+        cache = popat!(old_content, i)
+        unmount!(cache.tab)
+    end
 
-    # --- 1. Handle Removals --- 
-    if !isempty(to_remove)
-        # We must get all page numbers before deleting, as indices will shift.
-        pages_to_delete = []
-        caches_to_remove = []
+    # Add new tabs and reorder existing ones
+    for data in new_tabs_data
+        existing_cache = nothing
         for cache in old_content
-            if cache.value in to_remove
-                page = Gtk4.pagenumber(c._widget, cache.tab._content)
-                if page != -1
-                    push!(pages_to_delete, (page, cache))
-                end
+            if cache.value == data
+                existing_cache = cache
+                break
             end
         end
 
-        # Sort by page number descending to delete from the end
-        sort!(pages_to_delete, by = x -> x[1], rev = true)
-
-        for (page, cache) in pages_to_delete
-            deleteat!(c._widget, page + 1) # deleteat! is 1-indexed
-            unmount!(cache.tab)
-        end
-
-        # Update the internal cache
-        filter!(cache -> !(cache.value in to_remove), old_content)
-    end
-
-    # --- 2. Handle Additions --- 
-    if !isempty(to_add)
-        data_to_new_idx = Dict(data => i for (i, data) in enumerate(new_tabs_data))
-        
-        # We need to sort the new tabs by their target index to insert them correctly
-        sorted_new_data = sort(collect(to_add), by = data -> data_to_new_idx[data])
-
-        for data in sorted_new_data
-            target_idx = data_to_new_idx[data]
+        if existing_cache !== nothing
+            push!(new_content, existing_cache)
+        else
             builder_output = @invokelatest c.builder(data)
             tab = isempty(builder_output) ? nothing : first(builder_output)
             if tab isa NotebookTab
-                (content_widget, label_widget) = mount!(tab, c)
-                # Gtk insert is 0-indexed
-                insert!(c._widget, target_idx - 1, content_widget, label_widget)
-                # Julia insert is 1-indexed
-                insert!(old_content, target_idx, (value=data, tab=tab))
+                mount!(tab, c)
+                push!(new_content, (; value = data, tab = tab))
+            else
+                @warn "Notebook builder must return a NotebookTab, not $(typeof(tab))"
             end
         end
     end
 
-    # Note: This implementation correctly handles additions and removals without a full redraw.
-    # Reordering of existing items is not handled to avoid the complexity and risk of a full redraw.
-    c._content = old_content
+    empty!(c._widget)
+    for cache in new_content
+        push!(c._widget, cache.tab._content, cache.tab._label)
+    end
+    return c._content = new_content
 end
 
 function unmount!(c::Notebook)
