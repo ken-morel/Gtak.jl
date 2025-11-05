@@ -2,49 +2,47 @@ export GtakComponent, scheduleupdate, getpage
 abstract type GtakWidgetComponent <: GtakComponent end
 
 
-macro gtakwidgetcomponent(name, block)
-    if name isa Symbol
-        name = Expr(:<:, name, :GtakWidgetComponent)
+macro gtakwidgetcomponent(def)
+    @assert def.head == :struct
+    base = quote
+        # "The opacity of the widget, from 0.0 (fully transparent) to 1.0 (fully opaque)."
+        opacity::Union{MayBeReactive{<:Real}, Nothing} = nothing
+        # "Sets the margin around the widget. Can be an `Int` for all sides, a `(vertical, horizontal)` tuple, or a `(top, right, bottom, left)` tuple."
+        margin::Union{MayBeReactive{Union{Int, NTuple{2, Int}, NTuple{4, Int}}}, Nothing} = nothing
+        # "Sets the vertical and horizontal alignment of the widget within its allocated space. Can be a `Gtk4.Align` value or a `(vertical, horizontal)` tuple."
+        align::Union{MayBeReactive{<:Union{<:NTuple{2, Union{Gtk4.Align, Nothing}}, Gtk4.Align}}, Nothing} = nothing
+        # "Whether the widget should expand to fill extra space. Can be a `Bool` for both directions or a `(vertical, horizontal)` tuple."
+        expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
+        # "Whether the widget can receive keyboard focus."
+        canfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
+        # "Whether the widget currently has keyboard focus."
+        hasfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
+        # "The mouse cursor to display when hovering over the widget."
+        cursor::Union{MayBeReactive{GdkCursor}, Nothing} = nothing
+        # "Whether the widget is sensitive to user input."
+        sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
+        # "A tooltip to display when hovering over the widget. Supports Pango markup."
+        tooltip::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
+        # "Whether the widget is visible."
+        visible::Union{MayBeReactive{Bool}, Nothing} = nothing
+        # "A list of CSS classes to apply to the widget for styling."
+        cssclasses::Union{MayBeReactive{<:AbstractVector{<:AbstractString}}, Nothing} = nothing
+        # "The CSS name to apply to the widget, used for styling."
+        cssname::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
+        # "The desired width of the widget."
+        width_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
+        # "The desired height of the widget."
+        height_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
+        # "Parameters for layout managers like `Grid` (e.g., `lay:pos=(1,2)`)."
+        lay::SubParams = SubParams()
     end
-    return esc(
-        quote
-            @gtakcomponent $name   begin
-                "The opacity of the widget, from 0.0 (fully transparent) to 1.0 (fully opaque)."
-                opacity::Union{MayBeReactive{<:Real}, Nothing} = nothing
-                "Sets the margin around the widget. Can be an `Int` for all sides, a `(vertical, horizontal)` tuple, or a `(top, right, bottom, left)` tuple."
-                margin::Union{MayBeReactive{Union{Int, NTuple{2, Int}, NTuple{4, Int}}}, Nothing} = nothing
-                "Sets the vertical and horizontal alignment of the widget within its allocated space. Can be a `Gtk4.Align` value or a `(vertical, horizontal)` tuple."
-                align::Union{MayBeReactive{<:Union{<:NTuple{2, Union{Gtk4.Align, Nothing}}, Gtk4.Align}}, Nothing} = nothing
-                "Whether the widget should expand to fill extra space. Can be a `Bool` for both directions or a `(vertical, horizontal)` tuple."
-                expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
-                "Whether the widget can receive keyboard focus."
-                canfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
-                "Whether the widget currently has keyboard focus."
-                hasfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
-                "The mouse cursor to display when hovering over the widget."
-                cursor::Union{MayBeReactive{GdkCursor}, Nothing} = nothing
-                "Whether the widget is sensitive to user input."
-                sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
-                "A tooltip to display when hovering over the widget. Supports Pango markup."
-                tooltip::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
-                "Whether the widget is visible."
-                visible::Union{MayBeReactive{Bool}, Nothing} = nothing
-                "A list of CSS classes to apply to the widget for styling."
-                cssclasses::Union{MayBeReactive{<:AbstractVector{<:AbstractString}}, Nothing} = nothing
-                "The CSS name to apply to the widget, used for styling."
-                cssname::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
-                "The desired width of the widget."
-                width_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
-                "The desired height of the widget."
-                height_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
-                "Parameters for layout managers like `Grid` (e.g., `lay.pos=(1,2)`)."
-                lay::SubParams = SubParams()
-                $(LineNumberNode(__source__.line, __source__.file))
-                $block
-            end
-        end
-    )
+    if def.args[2] isa Symbol
+        def.args[2] = Expr(:<:, def.args[2], :GtakWidgetComponent)
+    end
+    append!(def.args[3].args, base.args[2:end])
+    return esc(Expr(:macrocall, Symbol("@gtakcomponent"), LineNumberNode(__source__.line, __source__.file), def))
 end
+
 const _gtak_common = Set(
     [
         :opacity, :margin, :align, :expand, :canfocus, :hasfocus, :cursor, :sensitive, :tooltip, :visible,

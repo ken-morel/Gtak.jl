@@ -5,7 +5,7 @@ export ToggleButton
 
 A button that can be toggled between an active and inactive state.
 """
-@gtakwidgetcomponent ToggleButton  begin
+@gtakwidgetcomponent struct ToggleButton
     "The current state of the toggle button (`true` for active, `false` for inactive)."
     value::MayBeReactive{Bool} = false
     "A callback function to execute when the button is toggled. Receives the new boolean state as an argument."

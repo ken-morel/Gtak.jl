@@ -200,7 +200,7 @@ remount!(::AbstractPage) = error("Remounting pages is unsupported")
 function unmount!(p::AbstractPage)
     @lock p begin
         if p.onunmount isa Function
-            @invokelatest p.onunmount(p)
+            @invokelatest p.onunmount()
         end
         foreach(unmount!, p.content)
         p.context = nothing

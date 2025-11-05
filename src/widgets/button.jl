@@ -5,7 +5,7 @@ export Button
 
 A clickable button.
 """
-@gtakwidgetcomponent Button  begin
+@gtakwidgetcomponent struct Button
     "The text to display on the button. If children are provided, this is ignored."
     text::MayBeReactive{<:AbstractString} = ""
     "A callback function to execute when the button is clicked."

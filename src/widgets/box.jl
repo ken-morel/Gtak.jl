@@ -8,7 +8,7 @@ A container that packs its children in a single row or column.
 `HBox(...)` is a convenience constructor for a horizontal box (`orient=Gtk4.Orientation_HORIZONTAL`).
 `VBox(...)` is a convenience constructor for a vertical box (`orient=Gtk4.Orientation_VERTICAL`).
 """
-@gtakwidgetcomponent Box  begin
+@gtakwidgetcomponent struct Box
     "The orientation of the box: `Gtk4.Orientation_HORIZONTAL` or `Gtk4.Orientation_VERTICAL`."
     orient::Gtk4.Orientation = Gtk4.Orientation_VERTICAL
     "The spacing between children in pixels."

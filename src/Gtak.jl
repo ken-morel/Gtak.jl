@@ -104,7 +104,8 @@ include("./components/component.jl")
             push!(items', 4)
         end
 
-        app = application(a -> window(a), "com.gtak.precompile")
+
+        app = application(a -> window(identity, a), "com.gtak.precompile")
     end
 end
 

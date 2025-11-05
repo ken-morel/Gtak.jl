@@ -5,7 +5,7 @@ export Spinner
 
 An animated widget that indicates activity.
 """
-@gtakwidgetcomponent Spinner  begin
+@gtakwidgetcomponent struct Spinner
     "Whether the spinner is currently spinning."
     spinning::MayBeReactive{Bool} = true
 end

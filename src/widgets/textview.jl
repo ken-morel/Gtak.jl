@@ -5,7 +5,7 @@ export TextView
 
 A multi-line text input field.
 """
-@gtakwidgetcomponent TextView begin
+@gtakwidgetcomponent struct TextView
     "The current text content of the text view."
     text::MayBeReactive{<:AbstractString} = ""
     "Whether the text can be edited by the user."

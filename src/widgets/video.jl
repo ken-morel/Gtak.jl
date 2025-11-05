@@ -5,7 +5,7 @@ export Video
 
 A widget that displays a video from a file.
 """
-@gtakwidgetcomponent Video begin
+@gtakwidgetcomponent struct Video
     "The path to a video file to display."
     file::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
     "Whether the video should start playing automatically."

@@ -15,7 +15,7 @@ It manages windows, application-wide state, data stores, and the main GTK `GtkAp
 - `stores::Dict{Symbol, Atak.AbstractStoreNode}`: A dictionary for data persistence, managed by `Atak.jl`.
 - `data::Dict{Symbol, Any}`: A dictionary for holding arbitrary application-wide, non-persistent state.
 - `stylesheet::Union{Stylesheet, Nothing}`: An optional stylesheet to apply to the application.
-- `menubar::Union{Menu, Nothing}`: An optional `Menu` component to be used as the application's menubar.
+- `menubar::Union{AbstractMenu, Nothing}`: An optional `Menu` component to be used as the application's menubar.
 - `scheduler::Sched.Scheduler`: The task scheduler for the application, provided by `Atak.jl`.
 """
 Base.@kwdef mutable struct Application <: AbstractGtakApplication
@@ -25,7 +25,7 @@ Base.@kwdef mutable struct Application <: AbstractGtakApplication
     stores::Dict{Symbol, Atak.AbstractStoreNode} = Dict()
     data::Dict{Symbol, Any} = Dict()
     stylesheet::Union{Stylesheet, Nothing} = nothing
-    menubar::Union{Menu, Nothing} = nothing
+    menubar::Union{AbstractMenu, Nothing} = nothing
     scheduler::Sched.Scheduler = Sched.Scheduler()
     const _lock = ReentrantLock()
 end
@@ -100,10 +100,11 @@ function IonicEfus.mount!(app::Application)::GtkApplication
     @lock app begin
         Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
-        if !isnothing(app.menubar)
-            mount!(app.menubar, app.app)
-        end
+
         signal_connect(app.app, :activate) do _
+            # if !isnothing(app.menubar)
+            #     mount!(app.menubar, app)
+            # end
             windows = @lock app begin
                 isnothing(app.stylesheet) || mount!(app.stylesheet, Gtk4.GdkDisplay())
                 copy(app.windows)

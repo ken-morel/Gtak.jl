@@ -5,7 +5,7 @@ export Image
 
 A widget that displays an image from a file or a named icon.
 """
-@gtakwidgetcomponent Image begin
+@gtakwidgetcomponent struct Image
     "The path to an image file to display."
     file::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
     "The name of a themed icon to display (e.g., \"document-new-symbolic\")."

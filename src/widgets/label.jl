@@ -5,7 +5,7 @@ export Label
 
 A widget that displays a block of text.
 """
-@gtakwidgetcomponent Label begin
+@gtakwidgetcomponent struct Label
     "The text to display. Supports Pango markup if `usemarkup` is `true`."
     text::MayBeReactive{<:AbstractString} = ""
     "Whether to parse Pango markup in the `text`."

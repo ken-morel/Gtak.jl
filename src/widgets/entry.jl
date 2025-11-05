@@ -5,7 +5,7 @@ export Entry
 
 A single-line text input field.
 """
-@gtakwidgetcomponent Entry  begin
+@gtakwidgetcomponent struct Entry
     "The current text content of the entry field."
     text::MayBeReactive{<:AbstractString} = ""
     "Placeholder text to display when the entry is empty."
@@ -17,7 +17,7 @@ A single-line text input field.
 
     _changed_handler_id::UInt = 0
 
-    const _textlock = Base.ReentrantLock()
+    const _textsm = Base.Semaphore(1)
 end
 
 
@@ -27,29 +27,26 @@ function mount!(e::Entry, p::GtakComponent)
         e._widget = GtkEntry(text = resolve(e.text))
         _gtakwidgetmountcommon!(e, [:text])
         if e.text isa AbstractReactive
-            catalyze!(e._catalyst, e.text) do r
-                trylock(e._textlock) && try
-                    val = getvalue(r)
-                    if e._widget.text != val
-                        e._widget.text = val
-                    end
-                finally
-                    unlock(e._textlock)
-                end
+            catalyze!(e._catalyst, e.text) do _
+                dirty!(e, :text)
             end
         end
         e._changed_handler_id = signal_connect(e._widget, "changed") do _
             current_text = e._widget.text
-            trylock(e._textlock) && try
-                if e.text isa AbstractReactive
-                    if getvalue(e.text) != current_text
-                        setvalue!(e.text, current_text)
+            schedule(
+                e, Sched.ReactantUpdate(e.text, Sched.UserInteractive) do
+                    Base.acquire(e._textsm) do
+                        if e.text isa AbstractReactive
+                            if getvalue(e.text) != current_text
+                                setvalue!(e.text, current_text)
+                            end
+                        end
+
+
                     end
                 end
+            )
 
-            finally
-                unlock(e._textlock)
-            end
             if !isnothing(e.onchange)
                 schedule(
                     e, Sched.CallbackCall(e.onchange, Sched.Normal) do
@@ -69,6 +66,13 @@ function update!(e::Entry)
             e._widget.placeholder_text = resolve(e.placeholder)
         elseif dirt == :name && !isnothing(e.name)
             e._widget.name = resolve(e.name)
+        elseif dirt == :text
+            Base.acquire(e._textsm) do
+                val = getvalue(e.text)
+                if e._widget.text != val
+                    e._widget.text = val
+                end
+            end
         end
     end
 end

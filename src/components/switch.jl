@@ -15,7 +15,7 @@ It is similar to a `match` or `switch` statement, rendering content based on the
 - `remount::Bool`: If `true`, components are unmounted and remounted when the `value` changes, even if the rendered components are the same.
 - `box::SubParams`: Parameters to pass to the internal `Box` container that holds the rendered content.
 """
-@gtakcomponent Switched <: GtakComponent begin
+@gtakcomponent struct Switched <: GtakComponent
     value::AbstractReactive
     builder::Function
     rebuild::MayBeReactive{Bool} = false

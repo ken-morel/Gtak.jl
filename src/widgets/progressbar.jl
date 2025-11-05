@@ -5,7 +5,7 @@ export ProgressBar
 
 A widget that displays the progress of an operation.
 """
-@gtakwidgetcomponent ProgressBar begin
+@gtakwidgetcomponent struct ProgressBar
     "The current value of the progress bar, between 0.0 and 1.0."
     value::MayBeReactive{<:Real} = 0.0
     "Whether to display a text representation of the progress."

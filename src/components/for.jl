@@ -15,7 +15,7 @@ It efficiently updates, adds, or removes items from the UI when the `items` coll
 - `rebuild::Bool`: If `true`, the `builder` function is re-executed for existing items when `items` change.
 - `box::SubParams`: Parameters to pass to the internal `Box` container that holds the rendered items.
 """
-@gtakcomponent For <: GtakComponent begin
+@gtakcomponent struct For <: GtakComponent
     items::MayBeReactive
     builder::Function
     remount::MayBeReactive{Bool} = false
@@ -67,7 +67,7 @@ function updatecontent!(l::For)
         if haskey(old_cache_map, item)
             (cached_components, cached_widgets) = pop!(old_cache_map, item)
             components = cached_components
-            widgets = cached_widgets
+            widgets = cached_widgets::Vector{<:GtkWidget}
 
             if rebuild
                 unmount!.(components)
@@ -78,18 +78,18 @@ function updatecontent!(l::For)
             if remount || isnothing(widgets)
                 # If remount is true or widgets were never mounted (e.g., initial build)
                 unmount!.(cached_components) # Unmount old components if new ones are being mounted
-                widgets = [mount!(c, l.innerbox) for c in components]
+                widgets = GtkWidget[mount!(c, l.innerbox) for c in components]
             end
         else
             # New item, build and mount
             components = @invokelatest l.builder(item)
-            widgets = [mount!(c, l.innerbox) for c in components]
+            widgets = GtkWidget[mount!(c, l.innerbox) for c in components]
         end
 
         for widget in widgets
             push!(widgetstoadd, widget)
         end
-        push!(final_cache, (item, components, widgets))
+        push!(final_cache, _RLCache((item, components, widgets)))
     end
 
 

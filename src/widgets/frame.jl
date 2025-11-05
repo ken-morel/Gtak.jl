@@ -5,7 +5,7 @@ export Frame
 
 A container that draws a frame around its child, with an optional label.
 """
-@gtakwidgetcomponent Frame  begin
+@gtakwidgetcomponent struct Frame
     const children::Components = []
 end
 
@@ -38,7 +38,7 @@ A `Frame` that contains a `Box` as its child, allowing for easy layout within th
 **Fields**
 - `box::SubParams`: Parameters to pass to the internal `Box` component.
 """
-@gtakwidgetcomponent BoxFrame  begin
+@gtakwidgetcomponent struct BoxFrame
     const box::SubParams = SubParams()
 
     const children::Components = []

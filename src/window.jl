@@ -111,6 +111,7 @@ function window(init::Function, app::AbstractGtakApplication; args...)
     return win
 end
 window(app::AbstractGtakApplication; args...) = Window(; app, args...)
+window(p::AbstractPage, app::AbstractGtakApplication; args...) = window(_ -> p, app; args...)
 
 function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
     @lock w begin

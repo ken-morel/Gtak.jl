@@ -5,7 +5,7 @@ export Scale
 
 A slider widget that allows the user to select a value from a range.
 """
-@gtakwidgetcomponent Scale begin
+@gtakwidgetcomponent struct Scale
     "The current value of the slider."
     value::MayBeReactive{<:Real} = 0.0
     "The minimum value of the range."

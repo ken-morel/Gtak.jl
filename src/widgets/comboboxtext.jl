@@ -5,7 +5,7 @@ export ComboBoxText
 
 A combo box that allows selecting from a list of text items.
 """
-@gtakwidgetcomponent ComboBoxText begin
+@gtakwidgetcomponent struct ComboBoxText
     "A list of strings to display as selectable items in the combo box."
     items::MayBeReactive{<:AbstractVector{<:AbstractString}} = String[]
     "The index of the currently active (selected) item. -1 means no item is selected."

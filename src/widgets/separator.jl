@@ -5,7 +5,7 @@ export Separator
 
 A widget that displays a horizontal or vertical line to separate other widgets.
 """
-@gtakwidgetcomponent Separator  begin
+@gtakwidgetcomponent struct Separator
     "The orientation of the separator: `Gtk4.Orientation_HORIZONTAL` or `Gtk4.Orientation_VERTICAL`."
     orient::MayBeReactive{Gtk4.Orientation} = O_H
 end

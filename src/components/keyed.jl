@@ -10,7 +10,7 @@ A control flow component that rebuilds its content whenever any of its specified
 - `builder::Function`: A function that returns a `Component` or `Components` to be rendered. This function is called whenever a dependency changes.
 - `box::SubParams`: Parameters to pass to the internal `Box` container that holds the rendered content.
 """
-@gtakcomponent Keyed <: GtakComponent begin
+@gtakcomponent struct Keyed <: GtakComponent
     deps::Vector{<:AbstractReactive}
     builder::Function
     const box = SubParams()

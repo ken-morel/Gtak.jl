@@ -8,7 +8,7 @@ A container that divides its area into two resizable panes.
 `HPaned(...)` is a convenience constructor for a horizontal paned (`orient=Gtk4.Orientation_HORIZONTAL`).
 `VPaned(...)` is a convenience constructor for a vertical paned (`orient=Gtk4.Orientation_VERTICAL`).
 """
-@gtakwidgetcomponent Paned begin
+@gtakwidgetcomponent struct Paned
     "The orientation of the paned: `Gtk4.Orientation_HORIZONTAL` or `Gtk4.Orientation_VERTICAL`."
     orient::Gtk4.Orientation = O_H
     "The position of the divider between the two panes."

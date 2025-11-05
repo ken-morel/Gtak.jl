@@ -5,7 +5,7 @@ export CheckButton
 
 A button that can be in one of two states: checked or unchecked.
 """
-@gtakwidgetcomponent CheckButton  begin
+@gtakwidgetcomponent struct CheckButton
     "The current state of the check button (`true` for checked, `false` for unchecked)."
     value::MayBeReactive{Bool} = false
     "A callback function to execute when the button's state is toggled. Receives the new boolean state as an argument."

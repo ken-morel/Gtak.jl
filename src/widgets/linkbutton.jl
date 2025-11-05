@@ -5,8 +5,9 @@ export LinkButton
 
 A button that acts as a hyperlink, opening the specified URI when clicked.
 """
-@gtakwidgetcomponent LinkButton  begin
-    "The URI to open when the button is clicked."
+@gtakwidgetcomponent struct LinkButton
+    # "The URI to open when the button is clicked."
+
     uri::MayBeReactive{<:AbstractString}
     "The text to display on the button. If not provided, the URI will be displayed."
     text::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing

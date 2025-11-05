@@ -7,7 +7,7 @@ A container that provides scrollbars for its child widget when the child is larg
 
 It can only have one child.
 """
-@gtakwidgetcomponent ScrolledWindow begin
+@gtakwidgetcomponent struct ScrolledWindow
     const children::Components = []
 end
 

@@ -5,7 +5,7 @@ export Switch
 
 A switch widget that can be toggled between on and off states.
 """
-@gtakwidgetcomponent Switch  begin
+@gtakwidgetcomponent struct Switch
     "The current state of the switch (`true` for on, `false` for off)."
     value::MayBeReactive{Bool} = false
     "A callback function to execute when the switch is toggled. Receives the new boolean state as an argument."
