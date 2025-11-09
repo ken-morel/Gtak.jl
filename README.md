@@ -1,5 +1,6 @@
 # Gtak.jl
 
+[![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-black)](https://github.com/fredrikekre/Runic.jl)
 Gtak.jl is a reactive, component-based framework for building modern GTK4 applications in Julia. It provides a declarative and elegant way to create complex user interfaces by leveraging the power of Julia's metaprogramming and the reactive core of `IonicEfus.jl`.
 
 ## The Atak Ecosystem

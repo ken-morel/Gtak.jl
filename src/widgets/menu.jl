@@ -12,17 +12,16 @@ end
 
 @gtakwidgetcomponent struct MenuButtonItem <: AbstractMenuItem
     label::MayBeReactive{String}
-    onclick::Union{Function, Nothing} = nothing
-    _action_name::Union{String, Nothing} = nothing
+    onclick::Union{Function,Nothing} = nothing
+    _action_name::Union{String,Nothing} = nothing
 end
 @gtakwidgetcomponent struct MenuCheckboxItem <: AbstractMenuItem
     label::MayBeReactive{String}
     checked::MayBeReactive{Bool} = false
-    onclick::Union{Function, Nothing} = nothing
-    _action_name::Union{String, Nothing} = nothing
+    onclick::Union{Function,Nothing} = nothing
+    _action_name::Union{String,Nothing} = nothing
 end
-@gtakcomponent struct MenuSeparator <: AbstractMenuItem
-end
+@gtakcomponent struct MenuSeparator <: AbstractMenuItem end
 
 @gtakcomponent struct SubMenu <: AbstractMenuItem
     label::MayBeReactive{String}
@@ -35,15 +34,19 @@ end
 end
 
 menuitem(::MayBeReactive{<:AbstractString}, m::SubMenu) = m
-menuitem(label::MayBeReactive{<:AbstractString}, onclick::Function) = MenuButtonItem(; label, onclick)
-menuitem(label::MayBeReactive{<:AbstractString}, checked::MayBeReactive{Bool}) = MenuCheckBoxItem(; label, checked)
-menuitem(label::MayBeReactive{<:AbstractString}, content::Vector{<:Pair}) = SubMenu(; label, items = menuitems(content))
+menuitem(label::MayBeReactive{<:AbstractString}, onclick::Function) =
+    MenuButtonItem(; label, onclick)
+menuitem(label::MayBeReactive{<:AbstractString}, checked::MayBeReactive{Bool}) =
+    MenuCheckBoxItem(; label, checked)
+menuitem(label::MayBeReactive{<:AbstractString}, content::Vector{<:Pair}) =
+    SubMenu(; label, items = menuitems(content))
 menuitem(::MayBeReactive{<:AbstractString}, val) = error("Invalid menu action value $val")
 
 menuitems(items::Vector{<:Pair}) = [menuitem(name, value) for (name, value) in items]
-Menu(items::Pair{<:MayBeReactive{<:AbstractString}, <:Any}...) = Menu(items = menuitems(collect(items)))
+Menu(items::Pair{<:MayBeReactive{<:AbstractString},<:Any}...) =
+    Menu(items = menuitems(collect(items)))
 
-const AbstractMenuContainer = Union{Menu, SubMenu}
+const AbstractMenuContainer = Union{Menu,SubMenu}
 
 
 function IonicEfus.mount!(c::Menu, app::AbstractGtakApplication)
@@ -59,18 +62,32 @@ function IonicEfus.mount!(c::Menu, app::AbstractGtakApplication)
     end
 end
 
-function IonicEfus.mount!(c::MenuButtonItem, p::AbstractMenuContainer, actions::GActionMap, parent_menu::GMenu)
+function IonicEfus.mount!(
+    c::MenuButtonItem,
+    p::AbstractMenuContainer,
+    actions::GActionMap,
+    parent_menu::GMenu,
+)
     return @lock c begin
         c._parent = p
         label = resolve(c.label)
-        action_name = "app." * replace(lowercase(label), r"[^a-z0-9_]" => "_") * "_" * string(hash(label), base = 62)
+        action_name =
+            "app." *
+            replace(lowercase(label), r"[^a-z0-9_]" => "_") *
+            "_" *
+            string(hash(label), base = 62)
         add_action(actions, action_name, c.onclick)
         c._widget = GMenuItem(resolve(c.label), action_name)
         push!(parent_menu, c._widget)
     end
 
 end
-function IonicEfus.mount!(c::SubMenu, p::AbstractMenuContainer, actions::GActionMap, parent_menu::GMenu)
+function IonicEfus.mount!(
+    c::SubMenu,
+    p::AbstractMenuContainer,
+    actions::GActionMap,
+    parent_menu::GMenu,
+)
     @lock c begin
         c._parent = p
         c._widget = GMenu()

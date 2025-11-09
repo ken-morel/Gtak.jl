@@ -26,14 +26,14 @@ Notebook tabs=TABS tab=SELECTED_TAB
   builder(info)
     NotebookTab label=info.title
       VBox margin=10
-        Label text="Content for tab #$(info.id)"
+        Label text="Content for tab #\$(info.id)"
   end
 ```
 """
 @gtakwidgetcomponent struct Notebook
     const children::Components = Components()
     tabs::MayBeReactive{<:AbstractVector} = []
-    builder::Union{Function, Snippet, Nothing} = nothing
+    builder::Union{Function,Snippet,Nothing} = nothing
     tab::MayBeReactive{<:Any} = nothing
 
     _content::Vector{Any} = [] # Cache for dynamic tabs: Vector of (value, tab_component)
@@ -43,8 +43,8 @@ end
 @gtakcomponent struct NotebookTab <: GtakComponent
     const children::Components = Components()
     label::MayBeReactive{<:AbstractString}
-    _label::Union{GtkLabel, Nothing} = nothing
-    _content::Union{GtkBox, Nothing} = nothing
+    _label::Union{GtkLabel,Nothing} = nothing
+    _content::Union{GtkBox,Nothing} = nothing
 end
 
 function mount!(tb::NotebookTab, nb::Notebook)
@@ -56,11 +56,9 @@ function mount!(tb::NotebookTab, nb::Notebook)
 
         if tb.label isa AbstractReactive
             catalyze!(tb._catalyst, tb.label) do label
-                schedule(
-                    tb, Sched.ComponentUpdate(tb, Sched.Normal) do
-                        tb._label.label = resolve(label)
-                    end
-                )
+                schedule(tb, Sched.ComponentUpdate(tb, Sched.Normal) do
+                    tb._label.label = resolve(label)
+                end)
             end
         end
         return tb._content, tb._label
@@ -89,19 +87,18 @@ function mount!(c::Notebook, p::GtakComponent)
 
         mount_static!(c)
 
-        c._switch_page_signal_id = signal_connect(c._widget, "switch-page") do _, _, page_num
-            if c.tab isa AbstractReactive && c.builder !== nothing
-                schedule(
-                    c, Sched.ReactantUpdate(c.tab, Sched.Normal) do
+        c._switch_page_signal_id =
+            signal_connect(c._widget, "switch-page") do _, _, page_num
+                if c.tab isa AbstractReactive && c.builder !== nothing
+                    schedule(c, Sched.ReactantUpdate(c.tab, Sched.Normal) do
                         if page_num < length(c._content)
-                            selected_data = c._content[page_num + 1].value
+                            selected_data = c._content[page_num+1].value
                             setvalue!(c.tab, selected_data)
                         end
-                    end
-                )
+                    end)
 
+                end
             end
-        end
 
         return c._widget
     end
@@ -145,7 +142,7 @@ function updatetabs!(c::Notebook, new_tabs_data::AbstractVector)
     if !isempty(old_content)
         current_page = c._widget.page
         if current_page >= 0 && current_page < length(old_content)
-            selected_value = old_content[current_page + 1].value
+            selected_value = old_content[current_page+1].value
             # Check if the selected tab will be removed
             if findfirst(==(selected_value), new_tabs_data) === nothing
                 was_removed = true
@@ -155,7 +152,10 @@ function updatetabs!(c::Notebook, new_tabs_data::AbstractVector)
 
     # --- 2. Determine which tabs to keep, remove, and add ---
     # Find tabs to remove and unmount them
-    to_remove_indices = [i for (i, cache) in enumerate(old_content) if findfirst(==(cache.value), new_tabs_data) === nothing]
+    to_remove_indices = [
+        i for (i, cache) in enumerate(old_content) if
+        findfirst(==(cache.value), new_tabs_data) === nothing
+    ]
     for i in reverse(to_remove_indices)
         cache = popat!(old_content, i)
         unmount!(cache.tab)
@@ -214,13 +214,13 @@ function unmount!(c::Notebook)
         if c._widget !== nothing && c._switch_page_signal_id != 0
             signal_handler_disconnect(c._widget, c._switch_page_signal_id)
             c._switch_page_signal_id = 0
-        end
+            ed
 
-        for cache in c._content
-            unmount!(cache.tab)
+            for cache in c._content
+                unmount!(cache.tab)
+            end
+            empty!(c._content)
+            _gtakunmuntwidget!(c)
         end
-        empty!(c._content)
-
-        _gtakunmountwidget!(c)
     end
 end

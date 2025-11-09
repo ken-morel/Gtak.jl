@@ -11,9 +11,9 @@ A single-line text input field.
     "Placeholder text to display when the entry is empty."
     placeholder::MayBeReactive{<:AbstractString} = ""
     "A callback function to execute when the text in the entry changes. Receives the new text as an argument."
-    onchange::Union{Function, Nothing} = nothing
+    onchange::Union{Function,Nothing} = nothing
     "The name of the entry widget."
-    name::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
+    name::Union{MayBeReactive{<:AbstractString},Nothing} = nothing
 
     _changed_handler_id::UInt = 0
 
@@ -33,26 +33,24 @@ function mount!(e::Entry, p::GtakComponent)
         end
         e._changed_handler_id = signal_connect(e._widget, "changed") do _
             current_text = e._widget.text
-            schedule(
-                e, Sched.ReactantUpdate(e.text, Sched.UserInteractive) do
+
+            e.text isa AbstractReactive && schedule(
+                e,
+                Sched.ReactantUpdate(e.text, Sched.UserInteractive) do
                     Base.acquire(e._textsm) do
-                        if e.text isa AbstractReactive
-                            if getvalue(e.text) != current_text
-                                setvalue!(e.text, current_text)
-                            end
-                        end
-
-
+                        e.text isa AbstractReactive &&
+                            getvalue(e.text) != current_text&&setvalue!(
+                                e.text,
+                                current_text,
+                            )
                     end
-                end
+                end,
             )
 
             if !isnothing(e.onchange)
-                schedule(
-                    e, Sched.CallbackCall(e.onchange, Sched.Normal) do
-                        @invokelatest e.onchange(current_text)
-                    end
-                )
+                schedule(e, Sched.CallbackCall(e.onchange, Sched.Normal) do
+                    @invokelatest e.onchange(current_text)
+                end)
             end
         end
 
@@ -68,7 +66,7 @@ function update!(e::Entry)
             e._widget.name = resolve(e.name)
         elseif dirt == :text
             Base.acquire(e._textsm) do
-                val = getvalue(e.text)
+                val = resolve(e.text)
                 if e._widget.text != val
                     e._widget.text = val
                 end

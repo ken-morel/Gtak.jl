@@ -22,7 +22,7 @@ end
               Button text=item onclick=(() -> ITEM' = item)
             end
           Separator
-          Switch value=ITEM
+          Switched value=ITEM
             builder(item)
               Label text="This will be built only once"
               (println("Building for $item");)

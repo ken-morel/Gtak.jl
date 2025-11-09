@@ -9,7 +9,18 @@ using PrecompileTools
 
 using StructUtils
 
-import IonicEfus: update!, mount!, unmount!, remount!, getchildren, getparent, dirty!, isdirty, params, getvalue, setvalue!
+import IonicEfus:
+    update!,
+    mount!,
+    unmount!,
+    remount!,
+    getchildren,
+    getparent,
+    dirty!,
+    isdirty,
+    params,
+    getvalue,
+    setvalue!
 
 
 using FunctionWrappers: FunctionWrapper
