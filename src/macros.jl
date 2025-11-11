@@ -13,7 +13,7 @@ This macro is used to define pages whose content is built once and does not chan
 """
 macro staticpage_str(code::AbstractString, stylesheet = nothing)
 
-    gen = generate(IonicEfus.parse_efus(code, "<staticpage macro at $(__source__.file):$(__source__.line)"))
+    gen = generate(Efus.parse_efus(code, "<staticpage macro at $(__source__.file):$(__source__.line)"))
     return esc(
         quote
             $(LineNumberNode(__source__.line, __source__.file))
@@ -34,7 +34,7 @@ This macro is used to define pages whose content can be hot-reloaded during deve
 - `cb`: An optional callback function to be executed when the page is mounted.
 """
 macro reloadablepage(code::AbstractString, cb = nothing)
-    gen = IonicEfus.parse_efus(
+    gen = Efus.parse_efus(
         code, "<reloadable macro at $(__source__.file):$(__source__.line)",
     ) |> generate |> esc
     onmount = gensym()
@@ -61,7 +61,7 @@ This is a convenience macro for defining reloadable pages without an explicit mo
 - `code::AbstractString`: The Efus template string defining the page's UI.
 """
 macro reloadablepage_str(code::AbstractString)
-    gen = IonicEfus.parse_efus(
+    gen = Efus.parse_efus(
         code, "<reloadable macro at $(__source__.file):$(__source__.line)",
     ) |> generate |> esc
     return quote

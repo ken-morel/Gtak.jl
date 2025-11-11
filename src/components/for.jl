@@ -27,7 +27,7 @@ It efficiently updates, adds, or removes items from the UI when the `items` coll
     _cache::Vector{_RLCache} = []
 end
 
-function IonicEfus.mount!(l::For, p::GtakComponent)
+function Efus.mount!(l::For, p::GtakComponent)
     l._parent = p
     l.items isa AbstractReactive && catalyze!(l._catalyst, l.items) do _
         dirty!(l, :items)
@@ -36,7 +36,7 @@ function IonicEfus.mount!(l::For, p::GtakComponent)
     updatecontent!(l)
     return l._widget
 end
-function IonicEfus.update!(l::For)
+function Efus.update!(l::For)
     return _updates(l) do key
         if key == :items
             updatecontent!(l)
@@ -104,7 +104,7 @@ function updatecontent!(l::For)
     l._cache = final_cache
     return
 end
-function IonicEfus.unmount!(l::For)
+function Efus.unmount!(l::For)
     unmount!(l.innerbox)
     denature!(l._catalyst)
     empty!(l._cache)

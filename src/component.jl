@@ -1,4 +1,4 @@
-function IonicEfus.remount!(c::GtakComponent)
+function Efus.remount!(c::GtakComponent)
     p = getparent(c)
     unmount!(c)
     return mount!(c, p)

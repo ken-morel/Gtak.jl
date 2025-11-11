@@ -49,7 +49,7 @@ Menu(items::Pair{<:MayBeReactive{<:AbstractString},<:Any}...) =
 const AbstractMenuContainer = Union{Menu,SubMenu}
 
 
-function IonicEfus.mount!(c::Menu, app::AbstractGtakApplication)
+function Efus.mount!(c::Menu, app::AbstractGtakApplication)
     @lock c begin
         c._parent = app
         c._widget = GMenu()
@@ -62,7 +62,7 @@ function IonicEfus.mount!(c::Menu, app::AbstractGtakApplication)
     end
 end
 
-function IonicEfus.mount!(
+function Efus.mount!(
     c::MenuButtonItem,
     p::AbstractMenuContainer,
     actions::GActionMap,
@@ -82,7 +82,7 @@ function IonicEfus.mount!(
     end
 
 end
-function IonicEfus.mount!(
+function Efus.mount!(
     c::SubMenu,
     p::AbstractMenuContainer,
     actions::GActionMap,
@@ -99,7 +99,7 @@ function IonicEfus.mount!(
     end
 end
 
-function IonicEfus.mount!(c::MenuSeparator, app::GtkApplication, parent_menu::GMenu)
+function Efus.mount!(c::MenuSeparator, app::GtkApplication, parent_menu::GMenu)
     c._parent = app
     # GTK4 uses sections for separators. We add an anonymous section.
     Gtk4.menu_append_section(parent_menu, nothing, GMenu())

@@ -96,7 +96,7 @@ function Base.run(app::Application)
 end
 
 
-function IonicEfus.mount!(app::Application)::GtkApplication
+function Efus.mount!(app::Application)::GtkApplication
     @lock app begin
         Sched.start!(app.scheduler)
         app.app = GtkApplication(app.id)
@@ -117,7 +117,7 @@ function IonicEfus.mount!(app::Application)::GtkApplication
     end
 end
 
-function IonicEfus.unmount!(app::Application)
+function Efus.unmount!(app::Application)
     @lock app begin
 
         unmount!.(app.windows)

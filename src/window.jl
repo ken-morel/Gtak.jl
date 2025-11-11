@@ -113,7 +113,7 @@ end
 window(app::AbstractGtakApplication; args...) = Window(; app, args...)
 window(p::AbstractPage, app::AbstractGtakApplication; args...) = window(_ -> p, app; args...)
 
-function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
+function Efus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
     @lock w begin
         w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
         w.app = app
@@ -143,7 +143,7 @@ function IonicEfus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicati
     end
 end
 
-function IonicEfus.unmount!(w::Window)
+function Efus.unmount!(w::Window)
     @lock w begin
         if !isnothing(w.currentpage)
             unmount!(w.current_page)

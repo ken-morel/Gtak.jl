@@ -180,7 +180,7 @@ A function that builds and returns a page.
 """
 const PageBuilder = FunctionWrapper{AbstractPage, Tuple{}}
 
-function IonicEfus.mount!(p::AbstractPage, ctx::Union{PageContext, Nothing} = nothing)
+function Efus.mount!(p::AbstractPage, ctx::Union{PageContext, Nothing} = nothing)
     @lock p begin
         p.context = ctx
 

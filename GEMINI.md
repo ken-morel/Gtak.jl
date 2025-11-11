@@ -81,7 +81,7 @@ end
 
 ### 5. Reactivity and Scheduling
 
-`Gtak.jl` leverages the reactivity model from `IonicEfus.jl`. Component properties can be `Reactant`s or `Reactor`s. When a reactive property changes, the component is marked as "dirty".
+`Gtak.jl` leverages the reactivity model from `Efus.jl`. Component properties can be `Reactant`s or `Reactor`s. When a reactive property changes, the component is marked as "dirty".
 
 The `Scheduler` is responsible for updating dirty components. It runs on a separate thread and processes UI updates in a prioritized queue. This ensures that the UI remains responsive even when background tasks are running.
 

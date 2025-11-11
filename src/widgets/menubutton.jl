@@ -22,14 +22,15 @@ end
 
 function update!(m::MenuButton)
     _updates(m) do dirt
+        value = resolve(getproperty(m, dirt))
         if dirt ∈ Set((:label, :overflow, :primary))
-            setpropertyonce!(m._widget, dirt, resolve(getproperty(m, dirt)))
+            isnothing(value) || setproperty!(m._widget, dirt, value)
         elseif dirt == :hasframe
-            m._widget.has_frame = resolve(m.hasframe)
+            isnothing(value) || (m._widget.has_frame = value;)
         elseif dirt == :showarrow
-            m._widget.always_show_arrow = resolve(m.showarrow)
+            m._widget.always_show_arrow = value
         elseif dirt == :menumodel
-            m._widget.menu_model = resolve(m.menumodel)
+            isnothing(value) || (m._widget.menu_model = value;)
         elseif dirt == :menu
             menu = mount!(m.menu)
             m._widget.menu_model = menu

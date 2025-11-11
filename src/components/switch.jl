@@ -27,7 +27,7 @@ It is similar to a `match` or `switch` statement, rendering content based on the
     _content::Components = Components()
 end
 
-function IonicEfus.mount!(sb::Switched, p::GtakComponent)
+function Efus.mount!(sb::Switched, p::GtakComponent)
     sb._parent = p
     sb._widget = mount!(sb.innerbox, sb)
     catalyze!(sb._catalyst, sb.value) do _
@@ -37,7 +37,7 @@ function IonicEfus.mount!(sb::Switched, p::GtakComponent)
     return sb._widget
 end
 
-function IonicEfus.update!(sb::Switched)
+function Efus.update!(sb::Switched)
     return _updates(sb) do key
         if key == :value
             updatecontent!(sb)
@@ -76,7 +76,7 @@ function updatecontent!(sb::Switched)
     sb._content = components
     return
 end
-function IonicEfus.unmount!(sb::Switched)
+function Efus.unmount!(sb::Switched)
     unmount!(sb.innerbox)
     unmount!.(sb._content)
 

@@ -1,13 +1,13 @@
 # Gtak.jl
 
 [![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-black)](https://github.com/fredrikekre/Runic.jl)
-Gtak.jl is a reactive, component-based framework for building modern GTK4 applications in Julia. It provides a declarative and elegant way to create complex user interfaces by leveraging the power of Julia's metaprogramming and the reactive core of `IonicEfus.jl`.
+Gtak.jl is a reactive, component-based framework for building modern GTK4 applications in Julia. It provides a declarative and elegant way to create complex user interfaces by leveraging the power of Julia's metaprogramming and the reactive core of `Efus.jl`.
 
 ## The Atak Ecosystem
 
 Gtak.jl is a key part of a larger ecosystem of packages designed for building robust, high-performance applications:
 
-- **IonicEfus.jl**: The foundation of the ecosystem. It provides the core declarative UI templating language (Efus), a powerful reactivity model, and a component-based architecture. For a deep dive into reactivity, components, and the Efus language, please refer to the [IonicEfus.jl](https://github.com/ken-morel/IonicEfus.jl).
+- **Efus.jl**: The foundation of the ecosystem. It provides the core declarative UI templating language (Efus), a powerful reactivity model, and a component-based architecture. For a deep dive into reactivity, components, and the Efus language, please refer to the [Efus.jl](https://github.com/ken-morel/Efus.jl).
 - **Atak.jl**: Offers essential application-level services, including a file-system-based data persistence layer (`Store`) and, most notably, a multi-threaded task `Scheduler`.
 - **Gtak.jl**: The bridge to the GTK4 toolkit. It provides a rich set of reactive UI components that wrap GTK widgets, making them available within the Efus templating language.
 
@@ -72,7 +72,7 @@ Pages hold an optional(but usually important sheduler), which can be provided wh
 
 ### Reactivity and UI Updates: The `dirty!` System
 
-The UI automatically updates when your data changes. This is achieved through a collaboration between `IonicEfus.jl`'s reactivity and `Atak.jl`'s scheduler.
+The UI automatically updates when your data changes. This is achieved through a collaboration between `Efus.jl`'s reactivity and `Atak.jl`'s scheduler.
 
 1. **Reactive State**: Your component's state is stored in `Reactant`s.
 2. **Marking as Dirty**: When you change a reactive property (e.g., `my_reactant' = new_value`), the component that depends on it is marked as "dirty" by calling `dirty!(component, :property_name)`, if you want to edit a non-reactive, modifiable attribute, you can use `dirty!(component, :property, value)`.

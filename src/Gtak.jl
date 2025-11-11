@@ -2,14 +2,14 @@ module Gtak
 using Reexport
 using PrecompileTools
 
-@reexport using IonicEfus
+@reexport using Efus
 @reexport using Gtk4
 @reexport using Atak
 @reexport using BaseDirs: BaseDirs
 
 using StructUtils
 
-import IonicEfus:
+import Efus:
     update!,
     mount!,
     unmount!,
@@ -37,11 +37,11 @@ Abstract supertype for all Gtak application components.
 abstract type AbstractGtakApplication <: Atak.Application end
 
 """
-    GtakComponent <: IonicEfus.Component
+    GtakComponent <: Efus.Component
 
 Abstract supertype for all Gtak UI components.
 """
-abstract type GtakComponent <: IonicEfus.Component end
+abstract type GtakComponent <: Efus.Component end
 
 """
     AbstractGtakWindow <: GtakComponent

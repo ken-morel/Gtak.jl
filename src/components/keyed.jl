@@ -19,7 +19,7 @@ A control flow component that rebuilds its content whenever any of its specified
     const innerbox::Box = Box(; box...)
 end
 
-function IonicEfus.mount!(r::Keyed, p::GtakComponent)
+function Efus.mount!(r::Keyed, p::GtakComponent)
     r._widget = mount!(r.innerbox, r)
     r._parent = p
     callback = (_) -> dirty!(r, :deps)
@@ -30,7 +30,7 @@ function IonicEfus.mount!(r::Keyed, p::GtakComponent)
     return r._widget
 end
 
-function IonicEfus.update!(r::Keyed)
+function Efus.update!(r::Keyed)
     return _updates(r) do key
         if key == :deps
             rebuildcontent!(r)
@@ -50,7 +50,7 @@ function rebuildcontent!(r::Keyed)
     return
 end
 
-function IonicEfus.unmount!(r::Keyed)
+function Efus.unmount!(r::Keyed)
     unmount!.(r._content)
     unmount!(r.innerbox)
     denature!(r._catalyst)
