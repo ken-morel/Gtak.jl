@@ -2,6 +2,7 @@ module Gtak
 using Reexport
 using PrecompileTools
 
+@reexport using Ionic
 @reexport using Efus
 @reexport using Gtk4
 @reexport using Atak

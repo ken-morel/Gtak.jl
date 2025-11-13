@@ -6,38 +6,38 @@ macro gtakwidgetcomponent(def)
     @assert def.head == :struct
     base = quote
         # "The opacity of the widget, from 0.0 (fully transparent) to 1.0 (fully opaque)."
-        opacity::Union{MayBeReactive{<:Real},Nothing} = nothing
+        opacity::Union{MayBeReactive{<:Real}, Nothing} = nothing
         # "Sets the margin around the widget. Can be an `Int` for all sides, a `(vertical, horizontal)` tuple, or a `(top, right, bottom, left)` tuple."
-        margin::Union{MayBeReactive{Union{Int,NTuple{2,Int},NTuple{4,Int}}},Nothing} =
+        margin::Union{MayBeReactive{Union{Int, NTuple{2, Int}, NTuple{4, Int}}}, Nothing} =
             nothing
         # "Sets the vertical and horizontal alignment of the widget within its allocated space. Can be a `Gtk4.Align` value or a `(vertical, horizontal)` tuple."
         align::Union{
-            MayBeReactive{<:Union{<:NTuple{2,Union{Gtk4.Align,Nothing}},Gtk4.Align}},
+            MayBeReactive{<:Union{<:NTuple{2, Union{Gtk4.Align, Nothing}}, Gtk4.Align}},
             Nothing,
         } = nothing
         # "Whether the widget should expand to fill extra space. Can be a `Bool` for both directions or a `(vertical, horizontal)` tuple."
-        expand::Union{MayBeReactive{Union{NTuple{2,Bool},Bool}},Nothing} = nothing
+        expand::Union{MayBeReactive{Union{NTuple{2, Bool}, Bool}}, Nothing} = nothing
         # "Whether the widget can receive keyboard focus."
-        canfocus::Union{MayBeReactive{Bool},Nothing} = nothing
+        canfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
         # "Whether the widget currently has keyboard focus."
-        hasfocus::Union{MayBeReactive{Bool},Nothing} = nothing
+        hasfocus::Union{MayBeReactive{Bool}, Nothing} = nothing
         # "The mouse cursor to display when hovering over the widget."
-        cursor::Union{MayBeReactive{GdkCursor},Nothing} = nothing
+        cursor::Union{MayBeReactive{GdkCursor}, Nothing} = nothing
         # "Whether the widget is sensitive to user input."
-        sensitive::Union{MayBeReactive{Bool},Nothing} = nothing
+        sensitive::Union{MayBeReactive{Bool}, Nothing} = nothing
         # "A tooltip to display when hovering over the widget. Supports Pango markup."
-        tooltip::Union{MayBeReactive{<:AbstractString},Nothing} = nothing
+        tooltip::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
         # "Whether the widget is visible."
-        visible::Union{MayBeReactive{Bool},Nothing} = nothing
+        visible::Union{MayBeReactive{Bool}, Nothing} = nothing
         # "A list of CSS classes to apply to the widget for styling."
-        cssclasses::Union{MayBeReactive{<:AbstractVector{<:AbstractString}},Nothing} =
+        cssclasses::Union{MayBeReactive{<:AbstractVector{<:AbstractString}}, Nothing} =
             nothing
         # "The CSS name to apply to the widget, used for styling."
-        cssname::Union{MayBeReactive{<:AbstractString},Nothing} = nothing
+        cssname::Union{MayBeReactive{<:AbstractString}, Nothing} = nothing
         # "The desired width of the widget."
-        width_request::Union{MayBeReactive{<:Integer},Nothing} = nothing
+        width_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
         # "The desired height of the widget."
-        height_request::Union{MayBeReactive{<:Integer},Nothing} = nothing
+        height_request::Union{MayBeReactive{<:Integer}, Nothing} = nothing
         # "Parameters for layout managers like `Grid` (e.g., `lay:pos=(1,2)`)."
         lay::SubParams = SubParams()
     end
@@ -55,23 +55,25 @@ macro gtakwidgetcomponent(def)
     )
 end
 
-const _gtak_common = Set([
-    :opacity,
-    :margin,
-    :align,
-    :expand,
-    :canfocus,
-    :hasfocus,
-    :cursor,
-    :sensitive,
-    :tooltip,
-    :visible,
-    :cssclasses,
-    :cssname,
-    :width_request,
-    :height_request,
-])
-function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C<:GtakComponent}
+const _gtak_common = Set(
+    [
+        :opacity,
+        :margin,
+        :align,
+        :expand,
+        :canfocus,
+        :hasfocus,
+        :cursor,
+        :sensitive,
+        :tooltip,
+        :visible,
+        :cssclasses,
+        :cssname,
+        :width_request,
+        :height_request,
+    ]
+)
+function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C <: GtakComponent}
     if k == :margin
         if length(v) == 1
             w.margin_top = w.margin_bottom = w.margin_start = w.margin_end = v
@@ -99,15 +101,17 @@ function _gtakwidgetupdatecommon(c::C, w::GtkWidget, k::Symbol, v) where {C<:Gta
         else
             @warn "Component of type $C received invalid expand $v"
         end
-    elseif k in Set([
-        :canfocus,
-        :opacity,
-        :sensitive,
-        :cursor,
-        :visible,
-        :width_request,
-        :height_request,
-    ])
+    elseif k in Set(
+            [
+                :canfocus,
+                :opacity,
+                :sensitive,
+                :cursor,
+                :visible,
+                :width_request,
+                :height_request,
+            ]
+        )
         setproperty!(w, k, v)
         w.tooltip_markup = v
     elseif k == :cssclasses
@@ -207,8 +211,8 @@ ismounted(c::GtakComponent) = !isnothing(c._widget)
 function getpage(c::GtakComponent)
     current = c
     while !isa(current, AbstractPage) &&
-              (parent = getparent(current)) !== nothing &&
-              parent !== current
+            (parent = getparent(current)) !== nothing &&
+            parent !== current
         current = parent
         current isa AbstractPage && return current
     end
@@ -233,8 +237,8 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
                 if !isnothing(parent)
                     try
                         if parent isa Gtk4.GtkFrame ||
-                           parent isa Gtk4.GtkButton ||
-                           parent isa Gtk4.GtkScrolledWindow
+                                parent isa Gtk4.GtkButton ||
+                                parent isa Gtk4.GtkScrolledWindow
                             Gtk4.set_child(parent, nothing)
                         elseif parent isa Gtk4.GtkPaned
                             if Gtk4.get_start_child(parent) == widget
@@ -243,7 +247,7 @@ function _gtakunmountwidget!(c::GtakComponent; widgets::Vector{Symbol} = Symbol[
                                 Gtk4.set_end_child!(parent, nothing)
                             end
                         elseif parent isa Gtk4.GtkNotebook
-                            for i = 0:(Gtk4.get_n_pages(parent)-1)
+                            for i in 0:(Gtk4.get_n_pages(parent) - 1)
                                 if Gtk4.get_nth_page(parent, i) == widget
                                     Gtk4.remove_page(parent, i)
                                     break
@@ -272,10 +276,10 @@ function scheduleupdate(c::GtakComponent, priority::Sched.Priority = Sched.Norma
 end
 
 function dirty!(
-    c::GtakComponent,
-    attr::Symbol;
-    priority::Union{Sched.Priority,Nothing} = Sched.Normal,
-)
+        c::GtakComponent,
+        attr::Symbol;
+        priority::Union{Sched.Priority, Nothing} = Sched.Normal,
+    )
     @lock c begin
         push!(c._dirty, attr)
         !isnothing(priority) && scheduleupdate(c, priority)
@@ -283,11 +287,11 @@ function dirty!(
     return
 end
 function dirty!(
-    c::GtakComponent,
-    attr::Symbol,
-    value;
-    priority::Union{Sched.Priority,Nothing} = Sched.Normal,
-)
+        c::GtakComponent,
+        attr::Symbol,
+        value;
+        priority::Union{Sched.Priority, Nothing} = Sched.Normal,
+    )
     @lock c begin
         setproperty!(c, attr, value)
         dirty!(c, attr; priority)
