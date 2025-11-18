@@ -135,18 +135,18 @@ end
 function _updates(fn::Function, c::Component)
     return @lock c begin
         if ismounted(c)
-            # gmain() do
-            while !isempty(c._dirty)
-                key = pop!(c._dirty)
-                if key in _gtak_common
-                    val = getproperty(c, key)
+            gmain() do
+                while !isempty(c._dirty)
+                    key = pop!(c._dirty)
+                    if key in _gtak_common
+                        val = getproperty(c, key)
 
-                    isnothing(val) ||
-                        _gtakwidgetupdatecommon(c, c._widget, key, resolve(val))
-                else
-                    fn(key)
+                        isnothing(val) ||
+                            _gtakwidgetupdatecommon(c, c._widget, key, resolve(val))
+                    else
+                        fn(key)
+                    end
                 end
-                # end
             end
         end
     end
@@ -177,29 +177,29 @@ function _trackreactiveattributes(c::GtakComponent, skip::Vector = [])
     return
 end
 
-include("./label.jl")
-include("./button.jl")
-include("./box.jl")
-include("./entry.jl")
-include("./spinner.jl")
-include("./separator.jl")
-include("./grid.jl")
-include("./frame.jl")
-include("./togglebutton.jl")
-include("./checkbutton.jl")
-include("./switch.jl")
-include("./linkbutton.jl")
-include("./image.jl")
-include("./progressbar.jl")
-include("./scale.jl")
-include("./textview.jl")
-include("./scrolledwindow.jl")
-include("./comboboxtext.jl")
-include("./notebook.jl")
-include("./paned.jl")
-include("./video.jl")
-include("./menu.jl")
-include("./menubutton.jl")
+include("label.jl")
+include("button.jl")
+include("box.jl")
+include("entry.jl")
+include("spinner.jl")
+include("separator.jl")
+include("grid.jl")
+include("frame.jl")
+include("togglebutton.jl")
+include("checkbutton.jl")
+include("switch.jl")
+include("linkbutton.jl")
+include("image.jl")
+include("progressbar.jl")
+include("scale.jl")
+include("textview.jl")
+include("scrolledwindow.jl")
+include("comboboxtext.jl")
+include("notebook.jl")
+include("paned.jl")
+include("video.jl")
+include("menu.jl")
+include("menubutton.jl")
 
 
 @generated getparent(c::GtakComponent) = hasfield(c, :_parent) ? :(c._parent) : nothing

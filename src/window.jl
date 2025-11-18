@@ -9,7 +9,6 @@ A top-level window in a Gtak application.
 It manages a `Router` to display pages and has its own component lifecycle. Windows are typically created within an `Application`.
 
 **Fields**
-
 - `scheduler::Scheduler`: The task scheduler for this window (often shared with the application).
 - `router::Router`: The router that manages the window's page navigation stack.
 - `title::String`: The text displayed in the window's title bar.
@@ -79,14 +78,20 @@ function Base.show(w::Window, p::Union{AbstractPage, Nothing})
             unmount!(p)
             mount!(p, getcontext(w))
         end
-        empty!(w._box) # Just in case
 
         if !isnothing(p)
-            stylesheet = getstylesheet(p)
-            isnothing(stylesheet) || mount!(stylesheet, Gtk4.display(w.window))
-            isempty(widgets) || push!(w._box, widgets...)
-            isempty(widgets) && @warn "Showing empty page in window"
+            let display = nothing
+                # gmain() do # Just in case
+                empty!(w._box)
+                display = Gtk4.display(w.window)
+                isempty(widgets) || push!(w._box, widgets...)
+                isempty(widgets) && @warn "Showing empty page in window"
+                # end
+                stylesheet = getstylesheet(p)
+                isnothing(stylesheet) || mount!(stylesheet, display)
+            end
         end
+
         return widgets
     end
 end
@@ -114,6 +119,7 @@ window(app::AbstractGtakApplication; args...) = Window(; app, args...)
 window(p::AbstractPage, app::AbstractGtakApplication; args...) = window(_ -> p, app; args...)
 
 function Efus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWindow
+    println("mounting wndow")
     @lock w begin
         w.context = PageContext(window = w, application = app, scheduler = w.scheduler)
         w.app = app
@@ -124,20 +130,17 @@ function Efus.mount!(w::Window, app::AbstractGtakApplication)::GtkApplicationWin
 
         # Set and show the initial page synchronously
         page = getvalue(w.router.current_page)
-        w.current_page = page
-        if page isa AbstractPage
-            show(w, page)
-        end
-
+        page isa AbstractPage && show(w, page)
         # Now, set up the reactive listener for subsequent page changes
         catalyze!(w.catalyst, w.router.current_page) do r
-            page = getvalue(r)
+            page = r[]
             if !isnothing(page)
                 schedule!(getscheduler(w)) do
                     show(w, page)
                 end
             end
         end
+
         present(w.window)
         return w.window
     end

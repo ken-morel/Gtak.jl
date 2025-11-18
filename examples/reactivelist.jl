@@ -2,17 +2,21 @@ using Gtak
 
 const text = Reactant("Hello world")
 
-struct Word
-    text::String
+@kwdef struct Word
+    text::AbstractString
+    len::Int
+end
+function wordinfo(txt::AbstractString)
+    return Word(; text = txt, len = length(txt))
 end
 
-words = @reactor [Word(word) for word in split(text', " ")]
-
-
 const Page = staticpage"""
-For items=(words')::Vector
+# vector will be diffed
+For items=(split(text', " ") .|> wordinfo)::Vector
   builder(word)
-    Label text=(word.text)
+    BoxFrame box:margin=10
+      Label text=(word.text)
+      Label text="$(word.len) letters"
   end
 Entry text=text
 """

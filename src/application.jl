@@ -86,12 +86,15 @@ reload!(a::Application; all = false) = foreach(w -> reload!(w; all), @lock a cop
 Starts the GTK event loop and runs the application.
 """
 function Base.run(app::Application)
+    println("Running app")
     if isnothing(app.app)
         mount!(app)
     end
+    println("mounted app")
     if isempty(app.windows)
         @warn "No windows to show in gtak application $(app.id)"
     end
+    println("Running main loop")
     return run(app.app)
 end
 
@@ -119,14 +122,12 @@ end
 
 function Efus.unmount!(app::Application)
     @lock app begin
-
         unmount!.(app.windows)
         isnothing(app.stylesheet) || unmount!(app.stylesheet)
         if !isnothing(app.app)
             destroy(app.app)
         end
         app.app = nothing
-
         Sched.stop!(app.scheduler)
     end
     return

@@ -16,95 +16,153 @@ It efficiently updates, adds, or removes items from the UI when the `items` coll
 - `box::SubParams`: Parameters to pass to the internal `Box` container that holds the rendered items.
 """
 @gtakcomponent struct For <: GtakComponent
-    items::MayBeReactive
+    items::MayBeReactive{<:AbstractVector}
     builder::Function
     remount::MayBeReactive{Bool} = false
     rebuild::MayBeReactive{Bool} = false
     const box = SubParams()
 
-
-    innerbox::Box = Box(; box...)
+    const innerbox::Box = Box(; box...)
     _cache::Vector{_RLCache} = []
 end
 
 function Efus.mount!(l::For, p::GtakComponent)
-    l._parent = p
-    l.items isa AbstractReactive && catalyze!(l._catalyst, l.items) do _
-        dirty!(l, :items)
+    @lock l begin
+        l._parent = p
+        l._widget = mount!(l.innerbox, l)
+        for item in resolve(l.items)
+            new_cache_item = _build_item(l, item)
+            push!(l._cache, new_cache_item)
+            push!(l.innerbox._widget, new_cache_item[3]...)
+        end
+
+        l.items isa AbstractReactive && oncollectionchange(l._catalyst, l.items) do compute_diff, _
+            schedule(
+                l, Sched.ComponentUpdate(l, Sched.Normal) do
+                    changes = compute_diff() # This computes the diff
+                    @lock l begin
+                        for change in changes
+                            _handle_collection_change(l, change)
+                        end
+                    end
+                end
+            )
+
+        end
+
+        return l._widget
     end
-    l._widget = mount!(l.innerbox, l)
-    updatecontent!(l)
-    return l._widget
 end
-function Efus.update!(l::For)
-    return _updates(l) do key
-        if key == :items
-            updatecontent!(l)
-        end
-    end
+
+
+function _build_item(l::For, item)
+    components = @invokelatest l.builder(item)
+    widgets = GtkWidget[mount!(c, l.innerbox) for c in components]
+    return _RLCache((item, components, widgets))
 end
 
-function updatecontent!(l::For)
-    new_items = resolve(l.items)
-    rebuild = resolve(l.rebuild)
-    remount = resolve(l.remount)
-
-    old_cache_map = Dict{Any, Tuple{Components, Vector{<:GtkWidget}}}()
-    for (item, components, widgets) in l._cache
-        old_cache_map[item] = (components, widgets)
-    end
-
-    # Clear the innerbox to re-add widgets in the correct order
-    #
-    widgetstoadd = GtkWidget[]
-
-    final_cache = Vector{_RLCache}()
-
-    for item in new_items
-        components = nothing
-        widgets = nothing
-
-        if haskey(old_cache_map, item)
-            (cached_components, cached_widgets) = pop!(old_cache_map, item)
-            components = cached_components
-            widgets = cached_widgets::Vector{<:GtkWidget}
-
-            if rebuild
-                unmount!.(components)
-                components = @invokelatest l.builder(item)
-                remount = true # Force remount if components were rebuilt
-            end
-
-            if remount || isnothing(widgets)
-                # If remount is true or widgets were never mounted (e.g., initial build)
-                unmount!.(cached_components) # Unmount old components if new ones are being mounted
-                widgets = GtkWidget[mount!(c, l.innerbox) for c in components]
-            end
-        else
-            # New item, build and mount
-            components = @invokelatest l.builder(item)
-            widgets = GtkWidget[mount!(c, l.innerbox) for c in components]
+function _rebuild_box_content(l::For)
+    gmain() do
+        empty!(l.innerbox._widget)
+        for (_, _, widgets) in l._cache
+            push!(l.innerbox._widget, widgets...)
         end
-
-        for widget in widgets
-            push!(widgetstoadd, widget)
-        end
-        push!(final_cache, _RLCache((item, components, widgets)))
     end
-
-
-    # Unmount components that are no longer in the new_items list
-    for (_, (components, _)) in old_cache_map
-        unmount!.(components)
-    end
-
-    empty!(l.innerbox._widget)
-    !isempty(widgetstoadd) && push!(l.innerbox._widget, widgetstoadd...)
-
-    l._cache = final_cache
     return
 end
+
+# --- `_handle_collection_change` methods using multiple dispatch ---
+
+function _handle_collection_change(l::For, change::Ionic.Push)
+    cache = []
+    for item in change.values
+        new_cache_item = _build_item(l, item)
+        push!(l._cache, new_cache_item)
+        push!(cache, new_cache_item[3]...)
+    end
+    isempty(cache) || gmain() do
+        push!(l.innerbox._widget, cache...)
+    end
+    return
+end
+
+function _handle_collection_change(l::For, change::Ionic.Pop)
+    todelete = []
+    for _ in 1:change.count
+        if !isempty(l._cache)
+            (_, components, widgets) = pop!(l._cache)
+            unmount!.(components)
+            isempty(widgets) || push!(todelete, widgets...)
+        end
+    end
+    gmain() do
+        for w in todelete
+            Gtk4.delete!(l.innerbox._widget, w)
+        end
+    end
+    return
+end
+
+function _handle_collection_change(l::For, change::Ionic.Replace)
+    return if 1 <= change.index <= length(l._cache)
+        # Unmount old
+        (_, old_components, _) = l._cache[change.index]
+        unmount!.(old_components)
+
+        # Build and replace in cache
+        new_cache_item = _build_item(l, change.value)
+        l._cache[change.index] = new_cache_item
+
+        # A full rebuild is simplest for UI replacement
+        _rebuild_box_content(l)
+    end
+end
+
+function _handle_collection_change(l::For, change::Ionic.Insert)
+    new_cache_item = _build_item(l, change.value)
+    insert!(l._cache, change.index, new_cache_item)
+    # GtkBox has no simple insert, so rebuild
+    return _rebuild_box_content(l)
+end
+
+function _handle_collection_change(l::For, change::Ionic.DeleteAt)
+    todelete = []
+    if 1 <= change.index <= length(l._cache)
+        (_, components, widgets) = splice!(l._cache, change.index)
+        unmount!.(components)
+        isempty(widgets) || push!(todelete, widgets...)
+
+    end
+    return isempty(todelete) || gmain() do
+        for w in todelete
+            Gtk4.delete!(l.innerbox._widget, w)
+        end
+    end
+end
+
+function _handle_collection_change(l::For, change::Ionic.Move)
+    # This is a significant optimization using GtkBox reordering
+    for (from, to) in change.moves
+        # Reorder cache
+        cache_item = splice!(l._cache, from)
+        insert!(l._cache, to, cache_item)
+        return _rebuild_box_content(l)
+    end
+    return
+end
+
+function _handle_collection_change(l::For, change::Ionic.Empty)
+    for (_, components, _) in l._cache
+        unmount!.(components)
+    end
+    empty!(l._cache)
+    return gmain(() -> empty!(l.innerbox._widget))
+end
+
 function Efus.unmount!(l::For)
+    for (_, components, _) in l._cache
+        unmount!.(components)
+    end
     unmount!(l.innerbox)
     denature!(l._catalyst)
     empty!(l._cache)
